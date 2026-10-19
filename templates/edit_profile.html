@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 640px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('profiles.view_profile', user_id=current_user.id) }}" style="font-size: 0.9rem; color: var(--muted); text-decoration: none;">
+      &larr; Cancel and return to profile
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h1 style="font-size: 1.5rem; margin-bottom: 0.25rem;">Edit Student Profile</h1>
+      <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 0;">
+        Update your collaboration details and skills so other students can discover and team up with you.
+      </p>
+    </div>
+
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('profiles.edit_profile') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Display Name -->
+        <div class="form-group">
+          <label for="display_name" class="form-label">Full Name *</label>
+          <input type="text" id="display_name" name="display_name" class="form-control" required maxlength="100" value="{{ form_data.display_name if form_data.display_name else current_user.display_name }}">
+        </div>
+
+        <!-- Department & Year of Study -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <label for="department" class="form-label">Department *</label>
+            <input type="text" id="department" name="department" class="form-control" value="{{ form_data.department if form_data.department else (current_user.department or 'Department of Information Technology') }}" placeholder="e.g. Information Technology">
+          </div>
+
+          <div>
+            <label for="year_of_study" class="form-label">Year of Study</label>
+            <select id="year_of_study" name="year_of_study" class="form-control">
+              <option value="1" {% if (form_data.year_of_study or current_user.year_of_study) == 1 %}selected{% endif %}>Year 1</option>
+              <option value="2" {% if (form_data.year_of_study or current_user.year_of_study) == 2 %}selected{% endif %}>Year 2</option>
+              <option value="3" {% if (form_data.year_of_study or current_user.year_of_study) == 3 %}selected{% endif %}>Year 3</option>
+              <option value="4" {% if (form_data.year_of_study or current_user.year_of_study) == 4 %}selected{% endif %}>Year 4</option>
+              <option value="5" {% if (form_data.year_of_study or current_user.year_of_study) == 5 %}selected{% endif %}>Year 5</option>
+              <option value="6" {% if (form_data.year_of_study or current_user.year_of_study) == 6 %}selected{% endif %}>Graduate</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="form-group">
+          <label for="bio" class="form-label">Short Bio (max 300 characters)</label>
+          <textarea id="bio" name="bio" class="form-control" rows="3" maxlength="300" data-counter="bio-counter" placeholder="Briefly describe your background, hackathon experience, or technical passions...">{{ form_data.bio if form_data.bio else (current_user.bio or '') }}</textarea>
+          <div id="bio-counter" class="char-counter">0 / 300 characters</div>
+        </div>
+
+        <!-- Skills (Chips) -->
+        <div class="form-group">
+          <label class="form-label">Technical Skills (up to 10)</label>
+          <span class="form-hint">Type a skill (e.g. Python, SQL, React) and press Enter or comma.</span>
+          <div class="chips-container" id="profile-skills-container">
+            <input type="text" class="chips-input" placeholder="Add skill...">
+          </div>
+          <input type="hidden" id="profile-skills-hidden" name="skills" value="{{ skills_csv if skills_csv else '' }}">
+        </div>
+
+        <!-- Interests (Chips) -->
+        <div class="form-group">
+          <label class="form-label">Interests &amp; Topics (up to 10)</label>
+          <span class="form-hint">Type an interest (e.g. AI ethics, FinTech, Robotics) and press Enter or comma.</span>
+          <div class="chips-container" id="profile-interests-container">
+            <input type="text" class="chips-input" placeholder="Add interest...">
+          </div>
+          <input type="hidden" id="profile-interests-hidden" name="interests" value="{{ interests_csv if interests_csv else '' }}">
+        </div>
+
+        <!-- Profile Image URL -->
+        <div class="form-group">
+          <label for="profile_image_url" class="form-label">Profile Picture URL (optional)</label>
+          <input type="url" id="profile_image_url" name="profile_image_url" class="form-control" value="{{ form_data.profile_image_url if form_data.profile_image_url else (current_user.profile_image_url or '') }}" placeholder="https://example.com/your-avatar.jpg">
+          <span class="form-hint">Must begin with http:// or https://. If omitted, your initials avatar will be shown.</span>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
+          <a href="{{ url_for('profiles.view_profile', user_id=current_user.id) }}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    initChipsInput("profile-skills-container", "profile-skills-hidden", 10, 30);
+    initChipsInput("profile-interests-container", "profile-interests-hidden", 10, 30);
+  });
+</script>
+{% endblock %}

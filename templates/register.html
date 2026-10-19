@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 460px; margin-top: 1.5rem;">
+  <div class="card">
+    <div class="card-header" style="text-align: center; background-color: transparent;">
+      <h1 style="font-size: 1.6rem; margin-bottom: 0.3rem;">Join TeamSphere</h1>
+      <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0;">
+        Create your student account to build your profile, showcase projects, and connect with teammates.
+      </p>
+    </div>
+
+    <div class="card-body">
+      {% if allowed_domain %}
+        <div class="alert alert-info" style="font-size: 0.85rem; padding: 0.6rem 0.8rem; margin-bottom: 1.25rem;">
+          Registration is restricted to college emails ending in <strong>@{{ allowed_domain }}</strong>.
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+        {{ form.csrf_token }}
+
+        <div class="form-group">
+          {{ form.display_name.label(class="form-label") }}
+          {{ form.display_name(class="form-control" + (" is-invalid" if form.display_name.errors else ""), placeholder="e.g. Alex Rivera", autocomplete="name") }}
+          {% for error in form.display_name.errors %}
+            <div class="form-error" role="alert">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.email.label(class="form-label") }}
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="alex@college.edu", autocomplete="email") }}
+          <span class="form-hint">Your email is kept private and will never be shared with other students.</span>
+          {% for error in form.email.errors %}
+            <div class="form-error" role="alert">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.password.label(class="form-label") }}
+          {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="At least 8 characters", autocomplete="new-password") }}
+          {% for error in form.password.errors %}
+            <div class="form-error" role="alert">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.confirm_password.label(class="form-label") }}
+          {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Re-enter your password", autocomplete="new-password") }}
+          {% for error in form.confirm_password.errors %}
+            <div class="form-error" role="alert">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          {{ form.submit(class="btn btn-primary", style="width: 100%;") }}
+        </div>
+      </form>
+    </div>
+
+    <div class="card-footer" style="justify-content: center; font-size: 0.9rem;">
+      <span style="color: var(--muted);">Already registered?</span>
+      <a href="{{ url_for('auth.login') }}" style="margin-left: 0.4rem; font-weight: 600;">Log in here</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

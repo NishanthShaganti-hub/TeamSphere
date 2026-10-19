@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TeamSphere{% endblock %} | Student Project & Team Finder</title>
+  <meta name="description" content="College department web portal for discovering student collaborators and exploring project archives.">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  
+  <!-- System Fonts and Custom Vanilla CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <!-- Accessibility: Skip to Content -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar-wrapper">
+    <div class="container navbar">
+      <div class="navbar-brand">
+        <a href="{{ url_for('main.index') }}" class="brand-link" aria-label="TeamSphere Home">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span class="brand-name">TeamSphere</span>
+        </a>
+      </div>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button type="button" class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+
+      <!-- Navigation Links -->
+      <nav class="nav-menu" id="nav-menu">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'projects' in request.endpoint %}active{% endif %}">Projects</a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('requests.team_finder') if 'requests.team_finder' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'team_finder' in request.endpoint %}active{% endif %}">Team Finder</a>
+          </li>
+
+          {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <a href="{{ url_for('main.dashboard') if 'main.dashboard' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a href="{{ url_for('requests.view_requests') if 'requests.view_requests' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'requests' in request.endpoint %}active{% endif %}">
+                Requests
+                {% if pending_requests_count and pending_requests_count > 0 %}
+                  <span class="nav-badge" aria-label="{{ pending_requests_count }} pending requests">{{ pending_requests_count }}</span>
+                {% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{{ url_for('profiles.view_profile', user_id=current_user.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'profiles' in request.endpoint %}active{% endif %}">My Profile</a>
+            </li>
+            <li class="nav-item nav-action">
+              <a href="{{ url_for('auth.logout') if 'auth.logout' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-sm">Log out</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a href="{{ url_for('auth.login') if 'auth.login' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'login' in request.endpoint %}active{% endif %}">Log in</a>
+            </li>
+            <li class="nav-item nav-action">
+              <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary btn-sm">Sign up</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Messages / Global Notifications -->
+  <div class="container flash-container" id="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'message' else 'info' }}" role="alert">
+            <span class="alert-text">{{ message }}</span>
+            <button type="button" class="alert-close" aria-label="Close message" onclick="this.parentElement.remove();">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content" class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Page Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-info">
+        <p class="footer-title"><strong>TeamSphere</strong> &bull; Department of Information Technology</p>
+        <p class="footer-subtitle">Connecting student builders, hackathons, and research projects across campus.</p>
+      </div>
+      <div class="footer-meta">
+        <p class="footer-note">Contact happens through verified team-up requests. Student emails remain private.</p>
+        <p class="footer-copy">&copy; {{ now.year if now else '2026' }} Department of Information Technology.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Toast Notifications Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Application JavaScript -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

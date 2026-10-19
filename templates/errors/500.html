@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}500 Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; text-align: center; padding: 4rem 1rem;">
+  <div class="card" style="padding: 3rem 2rem;">
+    <h1 style="font-size: 3.5rem; color: var(--danger); margin-bottom: 0.5rem;">500</h1>
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem;">Unexpected Error</h2>
+    <p style="color: var(--muted); margin-bottom: 2rem;">
+      An unexpected internal error occurred on our server. Our team has been notified.
+    </p>
+    <div>
+      <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+        Back to Home
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

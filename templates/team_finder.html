@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Team Finder{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Page Header -->
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Team Finder</h1>
+      <p class="section-subtitle">
+        Discover fellow students across departments with complementary skills for hackathons, coursework, and research.
+      </p>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
+    <form method="GET" action="{{ url_for('requests.team_finder') }}" style="display: grid; grid-template-columns: 3fr auto; gap: 0.75rem; align-items: center;">
+      {% if skill_filter %}
+        <input type="hidden" name="skill" value="{{ skill_filter }}">
+      {% endif %}
+      {% if interest_filter %}
+        <input type="hidden" name="interest" value="{{ interest_filter }}">
+      {% endif %}
+
+      <div>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search students by name, department, or keywords..." class="form-control" aria-label="Search students">
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        {% if search_query or skill_filter or interest_filter %}
+          <a href="{{ url_for('requests.team_finder') }}" class="btn btn-secondary btn-sm">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Skill Filter Chips -->
+    {% if available_skills and available_skills|length > 0 %}
+      <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+        <span style="font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-right: 0.5rem;">Filter by Skill:</span>
+        <div class="tag-list" style="display: inline-flex; margin: 0;">
+          {% for sk in available_skills[:12] %}
+            <a href="{{ url_for('requests.team_finder', q=search_query, interest=interest_filter, skill=sk.name if skill_filter != sk.name else '') }}" 
+               class="tag" style="text-decoration: none; {% if skill_filter == sk.name %}background-color: var(--primary); color: #fff; font-weight: 600;{% endif %}">
+              {{ sk.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Student Cards Grid -->
+  {% if students and students|length > 0 %}
+    <div class="grid-3">
+      {% for student in students %}
+        <div class="card card-hoverable">
+          <div class="card-body">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+              <div class="avatar avatar-lg">
+                {% if student.profile_image_url %}
+                  <img src="{{ student.profile_image_url }}" alt="{{ student.display_name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.parentElement.innerHTML='{{ student.initials }}';">
+                {% else %}
+                  {{ student.initials }}
+                {% endif %}
+              </div>
+              <div>
+                <h2 style="font-size: 1.15rem; margin-bottom: 0.2rem;">
+                  <a href="{{ url_for('profiles.view_profile', user_id=student.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}">
+                    {{ student.display_name }}
+                  </a>
+                </h2>
+                <span style="display: block; font-size: 0.82rem; color: var(--muted);">
+                  {{ student.department or 'Department of Information Technology' }} &bull; Year {{ student.year_of_study or '1' }}
+                </span>
+              </div>
+            </div>
+
+            {% if student.bio %}
+              <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ student.bio }}
+              </p>
+            {% endif %}
+
+            <!-- Skills List -->
+            <div style="margin-bottom: 0.5rem;">
+              <span style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Skills</span>
+              <div class="tag-list" style="margin-top: 0.25rem;">
+                {% for sk in student.skills[:4] %}
+                  <span class="tag">{{ sk.name }}</span>
+                {% endfor %}
+                {% if student.skills|length > 4 %}
+                  <span class="tag">+{{ student.skills|length - 4 }}</span>
+                {% endif %}
+                {% if student.skills|length == 0 %}
+                  <span style="font-size: 0.8rem; color: var(--muted); font-style: italic;">No skills listed yet</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="{{ url_for('profiles.view_profile', user_id=student.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-sm">
+              View profile
+            </a>
+
+            {% if not current_user.is_authenticated %}
+              <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-primary btn-sm">
+                Collaborate
+              </a>
+            {% elif student.id in pending_recipient_ids %}
+              <button class="btn btn-secondary btn-sm" disabled>
+                Pending
+              </button>
+            {% else %}
+              <button type="button" class="btn btn-primary btn-sm" onclick="openCollaborateModal({{ student.id }}, '{{ student.display_name }}')">
+                Collaborate
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+      <div style="display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('requests.team_finder', page=pagination.prev_num, q=search_query, skill=skill_filter, interest=interest_filter) }}" class="btn btn-secondary btn-sm">&larr; Prev</a>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            {% if p == pagination.page %}
+              <span class="btn btn-primary btn-sm" aria-current="page">{{ p }}</span>
+            {% else %}
+              <a href="{{ url_for('requests.team_finder', page=p, q=search_query, skill=skill_filter, interest=interest_filter) }}" class="btn btn-secondary btn-sm">{{ p }}</a>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--muted); padding: 0 0.25rem;">...</span>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+          <a href="{{ url_for('requests.team_finder', page=pagination.next_num, q=search_query, skill=skill_filter, interest=interest_filter) }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <h3 class="empty-state-title">No students found</h3>
+      <p class="empty-state-text">
+        Try searching with broader terms or clearing your skill filter.
+      </p>
+      <a href="{{ url_for('requests.team_finder') }}" class="btn btn-secondary btn-sm">Clear filters</a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal: Collaborate with Student -->
+<div class="modal-backdrop" id="collab-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="collab-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="collab-modal-title" class="modal-title">Send Collaboration Request</h2>
+      <button type="button" class="alert-close" aria-label="Close dialog" onclick="closeModal('collab-modal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('requests.send_request') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" id="collab-recipient-id" name="recipient_id" value="">
+
+      <div class="modal-body">
+        <p style="font-size: 0.92rem; color: var(--muted); margin-bottom: 1rem;">
+          Connect with <strong id="collab-student-name">Student</strong> to discuss hackathons or projects.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="collab-message" class="form-label">Optional message or idea pitch:</label>
+          <textarea id="collab-message" name="message" class="form-control" rows="3" maxlength="300" data-counter="collab-char-counter" placeholder="e.g. Hi! I saw your Python skills and wanted to see if you'd be interested in teaming up for the upcoming hackathon..."></textarea>
+          <div id="collab-char-counter" class="char-counter">0 / 300 characters</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('collab-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Send Request</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function openCollaborateModal(studentId, studentName) {
+    document.getElementById("collab-recipient-id").value = studentId;
+    document.getElementById("collab-student-name").textContent = studentName;
+    openModal("collab-modal");
+  }
+</script>
+{% endblock %}

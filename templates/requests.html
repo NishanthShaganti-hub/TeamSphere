@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}My Collaboration Requests{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 860px;">
+  <!-- Header -->
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Collaboration Requests</h1>
+      <p class="section-subtitle">Manage project invitations and direct student collaboration requests.</p>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+    <button type="button" class="btn btn-sm btn-primary" id="tab-received-btn" onclick="switchTab('received')">
+      Received ({% set pending_recv = received|selectattr('status', 'equalto', 'pending')|list %}{{ pending_recv|length }})
+    </button>
+    <button type="button" class="btn btn-sm btn-secondary" id="tab-sent-btn" onclick="switchTab('sent')">
+      Sent ({{ sent|length }})
+    </button>
+  </div>
+
+  <!-- Received Tab Content -->
+  <div id="tab-received-content">
+    {% if received and received|length > 0 %}
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for req in received %}
+          <div class="card" id="received-card-{{ req.id }}">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="avatar">{{ req.sender.initials }}</div>
+                  <div>
+                    <h3 style="font-size: 1.05rem; margin-bottom: 0.15rem;">
+                      <a href="{{ url_for('profiles.view_profile', user_id=req.sender.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}">
+                        {{ req.sender.display_name }}
+                      </a>
+                    </h3>
+                    <span style="font-size: 0.8rem; color: var(--muted);">
+                      {{ req.sender.department or 'Department of Information Technology' }} &bull; Year {{ req.sender.year_of_study or '1' }}
+                    </span>
+                  </div>
+                </div>
+                <span class="badge badge-{{ req.status }}">{{ req.status }}</span>
+              </div>
+
+              <div style="font-size: 0.92rem; margin-bottom: 0.75rem;">
+                {% if req.project %}
+                  Requested to join your project: 
+                  <a href="{{ url_for('projects.project_detail', project_id=req.project.id) }}" style="font-weight: 600;">
+                    {{ req.project.title }}
+                  </a>
+                {% else %}
+                  Requested a <strong>direct student-to-student collaboration</strong> with you.
+                {% endif %}
+              </div>
+
+              {% if req.message %}
+                <p style="font-size: 0.88rem; color: var(--muted); background-color: var(--primary-soft); padding: 0.6rem 0.85rem; border-radius: 6px; margin-bottom: 0.75rem;">
+                  &ldquo;{{ req.message }}&rdquo;
+                </p>
+              {% endif %}
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span style="font-size: 0.78rem; color: var(--muted);">
+                  Sent on {{ req.created_at.strftime('%b %d, %Y') }}
+                </span>
+
+                {% if req.status == 'pending' %}
+                  <div style="display: flex; gap: 0.5rem;">
+                    <form method="POST" action="{{ url_for('requests.reject_request', request_id=req.id) }}" style="margin: 0;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-secondary btn-sm">Decline</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('requests.accept_request', request_id=req.id) }}" style="margin: 0;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3 class="empty-state-title">No received requests</h3>
+        <p class="empty-state-text">When students request to join your projects or collaborate with you, they will appear here.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Sent Tab Content -->
+  <div id="tab-sent-content" style="display: none;">
+    {% if sent and sent|length > 0 %}
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for req in sent %}
+          <div class="card" id="sent-card-{{ req.id }}">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="avatar">{{ req.recipient.initials }}</div>
+                  <div>
+                    <h3 style="font-size: 1.05rem; margin-bottom: 0.15rem;">
+                      <a href="{{ url_for('profiles.view_profile', user_id=req.recipient.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}">
+                        {{ req.recipient.display_name }}
+                      </a>
+                    </h3>
+                    <span style="font-size: 0.8rem; color: var(--muted);">
+                      {{ req.recipient.department or 'Department of Information Technology' }}
+                    </span>
+                  </div>
+                </div>
+                <span class="badge badge-{{ req.status }}">{{ req.status }}</span>
+              </div>
+
+              <div style="font-size: 0.92rem; margin-bottom: 0.75rem;">
+                {% if req.project %}
+                  Requested to join project: 
+                  <a href="{{ url_for('projects.project_detail', project_id=req.project.id) }}" style="font-weight: 600;">
+                    {{ req.project.title }}
+                  </a>
+                {% else %}
+                  Direct collaboration request sent.
+                {% endif %}
+              </div>
+
+              {% if req.message %}
+                <p style="font-size: 0.88rem; color: var(--muted); background-color: var(--primary-soft); padding: 0.6rem 0.85rem; border-radius: 6px; margin-bottom: 0.75rem;">
+                  &ldquo;{{ req.message }}&rdquo;
+                </p>
+              {% endif %}
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span style="font-size: 0.78rem; color: var(--muted);">
+                  Sent on {{ req.created_at.strftime('%b %d, %Y') }}
+                </span>
+
+                {% if req.status == 'pending' %}
+                  <form method="POST" action="{{ url_for('requests.cancel_request', request_id=req.id) }}" style="margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Cancel Request</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3 class="empty-state-title">No sent requests</h3>
+        <p class="empty-state-text">You have not sent any team-up requests yet. Explore the Team Finder or Projects to connect with other students!</p>
+        <a href="{{ url_for('requests.team_finder') }}" class="btn btn-primary btn-sm">Explore Team Finder</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function switchTab(tab) {
+    const receivedBtn = document.getElementById("tab-received-btn");
+    const sentBtn = document.getElementById("tab-sent-btn");
+    const receivedContent = document.getElementById("tab-received-content");
+    const sentContent = document.getElementById("tab-sent-content");
+
+    if (tab === "received") {
+      receivedBtn.className = "btn btn-sm btn-primary";
+      sentBtn.className = "btn btn-sm btn-secondary";
+      receivedContent.style.display = "block";
+      sentContent.style.display = "none";
+    } else {
+      receivedBtn.className = "btn btn-sm btn-secondary";
+      sentBtn.className = "btn btn-sm btn-primary";
+      receivedContent.style.display = "none";
+      sentContent.style.display = "block";
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Projects{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Page Header -->
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Department Projects</h1>
+      <p class="section-subtitle">
+        Browse active student builds, discover teams looking for members, or search the completed project archive.
+      </p>
+    </div>
+    {% if current_user.is_authenticated %}
+      <div>
+        <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">
+          + Post a project
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Segmented Status Tabs -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('projects.browse_projects', status='all', category=category_filter, q=search_query, skill=skill_filter) }}" 
+       class="btn btn-sm {% if status_filter == 'all' and not faculty_only %}btn-primary{% else %}btn-secondary{% endif %}">
+      All
+    </a>
+    <a href="{{ url_for('projects.browse_projects', status='open', category=category_filter, q=search_query, skill=skill_filter) }}" 
+       class="btn btn-sm {% if status_filter == 'open' and not faculty_only %}btn-primary{% else %}btn-secondary{% endif %}">
+      Open for Teammates
+    </a>
+    <a href="{{ url_for('projects.browse_projects', faculty='true', category=category_filter, q=search_query, skill=skill_filter) }}" 
+       class="btn btn-sm {% if faculty_only %}btn-primary{% else %}btn-secondary{% endif %}">
+      Faculty / Official Hackathons
+    </a>
+    <a href="{{ url_for('projects.browse_projects', status='in_progress', category=category_filter, q=search_query, skill=skill_filter) }}" 
+       class="btn btn-sm {% if status_filter == 'in_progress' and not faculty_only %}btn-primary{% else %}btn-secondary{% endif %}">
+      In Progress
+    </a>
+    <a href="{{ url_for('projects.browse_projects', status='archive', category=category_filter, q=search_query, skill=skill_filter) }}" 
+       class="btn btn-sm {% if status_filter == 'archive' and not faculty_only %}btn-primary{% else %}btn-secondary{% endif %}">
+      Archive (Completed)
+    </a>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
+    <form method="GET" action="{{ url_for('projects.browse_projects') }}" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.75rem; align-items: center;">
+      <input type="hidden" name="status" value="{{ status_filter }}">
+      {% if skill_filter %}
+        <input type="hidden" name="skill" value="{{ skill_filter }}">
+      {% endif %}
+
+      <div>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search by title, description..." class="form-control" aria-label="Search projects">
+      </div>
+
+      <div>
+        <select name="category" class="form-control" aria-label="Filter by category" onchange="this.form.submit()">
+          <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+          <option value="hackathon" {% if category_filter == 'hackathon' %}selected{% endif %}>Hackathon</option>
+          <option value="academic" {% if category_filter == 'academic' %}selected{% endif %}>Academic</option>
+          <option value="personal" {% if category_filter == 'personal' %}selected{% endif %}>Personal</option>
+          <option value="research" {% if category_filter == 'research' %}selected{% endif %}>Research</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        {% if search_query or category_filter != 'all' or skill_filter or status_filter != 'all' %}
+          <a href="{{ url_for('projects.browse_projects') }}" class="btn btn-secondary btn-sm">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Skill Filter Chips -->
+    {% if available_skills and available_skills|length > 0 %}
+      <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+        <span style="font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-right: 0.5rem;">Filter by Skill:</span>
+        <div class="tag-list" style="display: inline-flex; margin: 0;">
+          {% for sk in available_skills[:12] %}
+            <a href="{{ url_for('projects.browse_projects', status=status_filter, category=category_filter, q=search_query, skill=sk.name if skill_filter != sk.name else '') }}" 
+               class="tag" style="text-decoration: none; {% if skill_filter == sk.name %}background-color: var(--primary); color: #fff; font-weight: 600;{% endif %}">
+              {{ sk.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Projects Grid -->
+  {% if projects and projects|length > 0 %}
+    <div class="grid-3">
+      {% for project in projects %}
+        <div class="card card-hoverable">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.35rem;">
+              <div style="display: flex; gap: 0.4rem; align-items: center;">
+                <span class="badge badge-{{ project.status }}">
+                  {{ project.status|replace('_', ' ') }}
+                </span>
+                {% if project.owner.role == 'faculty' %}
+                  <span class="badge badge-faculty" title="Verified by IT Faculty">
+                    &#9733; Faculty Verified
+                  </span>
+                {% endif %}
+              </div>
+              <span style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">
+                {{ project.category }}
+              </span>
+            </div>
+
+            <h2 style="font-size: 1.18rem; margin-bottom: 0.4rem;">
+              <a href="{{ url_for('projects.project_detail', project_id=project.id) }}">
+                {{ project.title }}
+              </a>
+            </h2>
+
+            <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.75rem;">
+              {{ project.short_description }}
+            </p>
+
+            <div class="tag-list">
+              {% for sk in project.skills[:4] %}
+                <span class="tag">{{ sk.name }}</span>
+              {% endfor %}
+              {% if project.skills|length > 4 %}
+                <span class="tag">+{{ project.skills|length - 4 }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <span style="font-size: 0.82rem; color: var(--muted);">
+              {% if project.owner.role == 'faculty' %}
+                Faculty Lead: <strong>Prof. {{ project.owner.display_name }}</strong>
+              {% else %}
+                Lead: <strong>{{ project.owner.display_name }}</strong>
+              {% endif %}
+            </span>
+            <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="btn btn-secondary btn-sm">
+              View details
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+      <div style="display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('projects.browse_projects', page=pagination.prev_num, status=status_filter, category=category_filter, q=search_query, skill=skill_filter) }}" class="btn btn-secondary btn-sm">&larr; Prev</a>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            {% if p == pagination.page %}
+              <span class="btn btn-primary btn-sm" aria-current="page">{{ p }}</span>
+            {% else %}
+              <a href="{{ url_for('projects.browse_projects', page=p, status=status_filter, category=category_filter, q=search_query, skill=skill_filter) }}" class="btn btn-secondary btn-sm">{{ p }}</a>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--muted); padding: 0 0.25rem;">...</span>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+          <a href="{{ url_for('projects.browse_projects', page=pagination.next_num, status=status_filter, category=category_filter, q=search_query, skill=skill_filter) }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <h3 class="empty-state-title">No projects match your criteria</h3>
+      <p class="empty-state-text">
+        Try adjusting your search terms, changing the category, or clearing the active filters.
+      </p>
+      <div style="display: flex; gap: 0.5rem; justify-content: center;">
+        <a href="{{ url_for('projects.browse_projects') }}" class="btn btn-secondary btn-sm">Clear all filters</a>
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary btn-sm">+ Post a project</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

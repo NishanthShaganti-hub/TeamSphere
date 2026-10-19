@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('projects.browse_projects') }}" style="font-size: 0.9rem; color: var(--muted); text-decoration: none;">
+      &larr; Back to all projects
+    </a>
+  </div>
+
+  <div class="grid-2" style="grid-template-columns: 2fr 1fr; align-items: flex-start;">
+    <!-- Left Column: Project Details -->
+    <div>
+      <div style="display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap;">
+        <span class="badge badge-{{ project.status }}">
+          {{ project.status|replace('_', ' ') }}
+        </span>
+        {% if project.owner.role == 'faculty' %}
+          <span class="badge badge-faculty">
+            &#9733; Faculty / Department Verified
+          </span>
+        {% endif %}
+        <span style="font-size: 0.82rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">
+          {{ project.category }}
+        </span>
+      </div>
+
+      <h1 style="font-size: 2.1rem; margin-bottom: 0.75rem;">{{ project.title }}</h1>
+      <p style="font-size: 1.1rem; color: var(--muted); margin-bottom: 1.5rem;">
+        {{ project.short_description }}
+      </p>
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-body">
+          <h2 style="font-size: 1.15rem; margin-bottom: 0.75rem;">About the Project</h2>
+          <div style="white-space: pre-line; line-height: 1.7; font-size: 0.98rem; color: var(--text);">
+            {{ project.full_description }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills Needed -->
+      <div style="margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Skills &amp; Technologies</h3>
+        <div class="tag-list">
+          {% for sk in project.skills %}
+            <span class="tag" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">{{ sk.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Repository Link -->
+      {% if project.repo_url %}
+        <div style="margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1rem; margin-bottom: 0.35rem;">Repository</h3>
+          <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            {{ project.repo_url }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Team & Action Cards -->
+    <div>
+      <!-- Action Card -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-body">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Collaboration</h3>
+
+          {% if is_owner %}
+            <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 1rem;">
+              You created this project. Manage your details or team settings.
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" class="btn btn-secondary">
+                Edit Project
+              </a>
+              <button type="button" class="btn btn-danger" onclick="openModal('delete-modal')">
+                Delete Project
+              </button>
+            </div>
+
+          {% elif is_member %}
+            <div class="alert alert-success" style="font-size: 0.88rem; padding: 0.6rem 0.8rem; margin-bottom: 0;">
+              You are an active teammate on this project!
+            </div>
+
+          {% elif not current_user.is_authenticated %}
+            <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 1rem;">
+              Interested in joining this team? Log in with your college account to send a request.
+            </p>
+            <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-primary" style="width: 100%;">
+              Log in to request to join
+            </a>
+
+          {% elif project.status == 'completed' %}
+            <div class="alert alert-info" style="font-size: 0.88rem; margin-bottom: 0;">
+              This project is marked as <strong>completed</strong> and archived.
+            </div>
+
+          {% elif project.status != 'looking_for_teammates' %}
+            <div class="alert alert-warning" style="font-size: 0.88rem; margin-bottom: 0;">
+              This project is currently <strong>in progress</strong> and not actively seeking new teammates.
+            </div>
+
+          {% elif has_pending_request %}
+            <button class="btn btn-secondary" style="width: 100%;" disabled>
+              Request Pending Review
+            </button>
+            <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 0.4rem; margin-bottom: 0;">
+              Your join request is awaiting the project lead's response.
+            </p>
+
+          {% else %}
+            <button type="button" class="btn btn-primary" style="width: 100%;" onclick="openModal('join-request-modal')">
+              Request to Join Team
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Team Members Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 style="font-size: 1.05rem; margin-bottom: 0;">Project Team</h3>
+        </div>
+        <div class="card-body">
+          <!-- Project Owner -->
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="avatar">{{ project.owner.initials }}</div>
+            <div>
+              <a href="{{ url_for('profiles.view_profile', user_id=project.owner.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}" style="font-weight: 600; font-size: 0.95rem;">
+                {% if project.owner.role == 'faculty' %}Prof. {% endif %}{{ project.owner.display_name }}
+              </a>
+              <span style="display: block; font-size: 0.8rem; color: var(--muted);">
+                {% if project.owner.role == 'faculty' %}Faculty Mentor / Lead{% else %}Project Lead{% endif %}
+              </span>
+            </div>
+          </div>
+
+          <!-- Teammates -->
+          {% if project.members and project.members|length > 0 %}
+            <h4 style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; margin-top: 1rem; margin-bottom: 0.5rem;">
+              Teammates ({{ project.members|length }})
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              {% for member in project.members %}
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="avatar" style="width: 36px; height: 36px; font-size: 0.85rem;">{{ member.initials }}</div>
+                  <div>
+                    <a href="{{ url_for('profiles.view_profile', user_id=member.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}" style="font-weight: 500; font-size: 0.9rem;">
+                      {{ member.display_name }}
+                    </a>
+                    <span style="display: block; font-size: 0.78rem; color: var(--muted);">{{ member.department or 'Student' }}</span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Send Join Request -->
+{% if current_user.is_authenticated and not is_owner and not is_member and project.status == 'looking_for_teammates' %}
+<div class="modal-backdrop" id="join-request-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="join-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="join-modal-title" class="modal-title">Request to Join Team</h2>
+      <button type="button" class="alert-close" aria-label="Close dialog" onclick="closeModal('join-request-modal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('requests.send_request') if 'requests.send_request' in url_map_endpoints else '#' }}" id="join-request-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="recipient_id" value="{{ project.owner_id }}">
+      <input type="hidden" name="project_id" value="{{ project.id }}">
+
+      <div class="modal-body">
+        <p style="font-size: 0.92rem; color: var(--muted); margin-bottom: 1rem;">
+          Send a request to <strong>{{ project.owner.display_name }}</strong> to join <strong>{{ project.title }}</strong>.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="request-note" class="form-label">Introduce yourself or describe what you'd like to work on (optional):</label>
+          <textarea id="request-note" name="message" class="form-control" rows="3" maxlength="300" data-counter="join-char-count" placeholder="e.g. Hi! I have experience with Python and frontend APIs and would love to contribute..."></textarea>
+          <div id="join-char-count" class="char-counter">0 / 300 characters</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('join-request-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="send-request-btn">Send Request</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal: Confirm Delete -->
+{% if is_owner %}
+<div class="modal-backdrop" id="delete-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="del-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="del-modal-title" class="modal-title">Confirm Deletion</h2>
+      <button type="button" class="alert-close" aria-label="Close dialog" onclick="closeModal('delete-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--text); margin-bottom: 0.5rem;">
+        Are you sure you want to permanently delete <strong>{{ project.title }}</strong>?
+      </p>
+      <p style="font-size: 0.85rem; color: var(--danger); margin-bottom: 0;">
+        This action cannot be undone. All project memberships and pending join requests will also be removed.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
+      <form method="POST" action="{{ url_for('projects.delete_project', project_id=project.id) }}" style="margin: 0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger">Yes, Delete Project</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Edit Project{% else %}Post a New Project{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% if is_edit %}{{ url_for('projects.project_detail', project_id=project.id) }}{% else %}{{ url_for('projects.browse_projects') }}{% endif %}" style="font-size: 0.9rem; color: var(--muted); text-decoration: none;">
+      &larr; Cancel and return
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h1 style="font-size: 1.5rem; margin-bottom: 0.25rem;">
+        {% if is_edit %}Edit Project: {{ project.title }}{% else %}Post a New Project{% endif %}
+      </h1>
+      <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 0;">
+        Share your academic, hackathon, or personal build to find teammates across the department.
+      </p>
+    </div>
+
+    <div class="card-body">
+      <form method="POST" action="{% if is_edit %}{{ url_for('projects.edit_project', project_id=project.id) }}{% else %}{{ url_for('projects.create_project') }}{% endif %}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="title" class="form-label">Project Title *</label>
+          <input type="text" id="title" name="title" class="form-control" required maxlength="150" value="{{ form_data.title if form_data.title else '' }}" placeholder="e.g. AI-Powered Course Recommendation System">
+        </div>
+
+        <!-- Short Description (140 chars) -->
+        <div class="form-group">
+          <label for="short_description" class="form-label">Short Summary (one-line pitch) *</label>
+          <input type="text" id="short_description" name="short_description" class="form-control" required maxlength="140" data-counter="short-desc-counter" value="{{ form_data.short_description if form_data.short_description else '' }}" placeholder="A 1-sentence description displayed on cards and searches">
+          <div id="short-desc-counter" class="char-counter">0 / 140 characters</div>
+        </div>
+
+        <!-- Category & Status -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <label for="category" class="form-label">Category *</label>
+            <select id="category" name="category" class="form-control" required>
+              <option value="hackathon" {% if form_data.category == 'hackathon' %}selected{% endif %}>Hackathon</option>
+              <option value="academic" {% if form_data.category == 'academic' %}selected{% endif %}>Academic</option>
+              <option value="personal" {% if form_data.category == 'personal' %}selected{% endif %}>Personal</option>
+              <option value="research" {% if form_data.category == 'research' %}selected{% endif %}>Research</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="status" class="form-label">Status *</label>
+            <select id="status" name="status" class="form-control" required>
+              <option value="looking_for_teammates" {% if form_data.status == 'looking_for_teammates' %}selected{% endif %}>Looking for Teammates</option>
+              <option value="in_progress" {% if form_data.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+              <option value="completed" {% if form_data.status == 'completed' %}selected{% endif %}>Completed (Archive)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Full Description -->
+        <div class="form-group">
+          <label for="full_description" class="form-label">Full Description *</label>
+          <textarea id="full_description" name="full_description" class="form-control" rows="6" required placeholder="Describe the problem, current architecture, roadmap, and what you are looking for in collaborators...">{{ form_data.full_description if form_data.full_description else '' }}</textarea>
+        </div>
+
+        <!-- Skills Needed (Chips input) -->
+        <div class="form-group">
+          <label class="form-label">Skills &amp; Tech Stack Needed</label>
+          <span class="form-hint">Type a skill (e.g. Python, React, PyTorch) and press Enter or comma.</span>
+          <div class="chips-container" id="skills-chips-container">
+            <input type="text" class="chips-input" placeholder="Add skill...">
+          </div>
+          <input type="hidden" id="skills-hidden" name="skills" value="{{ skills_csv if skills_csv else '' }}">
+        </div>
+
+        <!-- Repository URL -->
+        <div class="form-group">
+          <label for="repo_url" class="form-label">Project Repository or Demo URL (optional)</label>
+          <input type="url" id="repo_url" name="repo_url" class="form-control" value="{{ form_data.repo_url if form_data.repo_url else '' }}" placeholder="https://github.com/your-username/your-repo">
+          <span class="form-hint">Must begin with http:// or https://</span>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
+          <a href="{{ url_for('projects.browse_projects') }}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            {% if is_edit %}Save Changes{% else %}Publish Project{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    initChipsInput("skills-chips-container", "skills-hidden", 10, 30);
+  });
+</script>
+{% endblock %}

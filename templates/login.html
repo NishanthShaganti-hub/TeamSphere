@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 440px; margin-top: 2rem;">
+  <div class="card">
+    <div class="card-header" style="text-align: center; background-color: transparent;">
+      <h1 style="font-size: 1.6rem; margin-bottom: 0.3rem;">Welcome Back</h1>
+      <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0;">
+        Log in to manage your student projects and collaborate.
+      </p>
+    </div>
+
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}" novalidate>
+        {{ form.csrf_token }}
+
+        <div class="form-group">
+          {{ form.email.label(class="form-label") }}
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="alex@college.edu", autocomplete="email") }}
+          {% for error in form.email.errors %}
+            <div class="form-error" role="alert">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.password.label(class="form-label") }}
+          {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Your password", autocomplete="current-password") }}
+          {% for error in form.password.errors %}
+            <div class="form-error" role="alert">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          {{ form.submit(class="btn btn-primary", style="width: 100%;") }}
+        </div>
+      </form>
+    </div>
+
+    <div class="card-footer" style="justify-content: center; font-size: 0.9rem;">
+      <span style="color: var(--muted);">New to TeamSphere?</span>
+      <a href="{{ url_for('auth.register') }}" style="margin-left: 0.4rem; font-weight: 600;">Create an account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

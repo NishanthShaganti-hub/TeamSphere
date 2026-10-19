@@ -1,0 +1,38 @@
+# Python environment and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment and sensitive secrets
+.env
+.env.local
+.env.*.local
+
+# SQLite database files and instance folder
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Pytest and test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE and OS artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
