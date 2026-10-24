@@ -42,8 +42,6 @@
               <option value="2" {% if (form_data.year_of_study or current_user.year_of_study) == 2 %}selected{% endif %}>Year 2</option>
               <option value="3" {% if (form_data.year_of_study or current_user.year_of_study) == 3 %}selected{% endif %}>Year 3</option>
               <option value="4" {% if (form_data.year_of_study or current_user.year_of_study) == 4 %}selected{% endif %}>Year 4</option>
-              <option value="5" {% if (form_data.year_of_study or current_user.year_of_study) == 5 %}selected{% endif %}>Year 5</option>
-              <option value="6" {% if (form_data.year_of_study or current_user.year_of_study) == 6 %}selected{% endif %}>Graduate</option>
             </select>
           </div>
         </div>
@@ -73,13 +71,6 @@
             <input type="text" class="chips-input" placeholder="Add interest...">
           </div>
           <input type="hidden" id="profile-interests-hidden" name="interests" value="{{ interests_csv if interests_csv else '' }}">
-        </div>
-
-        <!-- Profile Image URL -->
-        <div class="form-group">
-          <label for="profile_image_url" class="form-label">Profile Picture URL (optional)</label>
-          <input type="url" id="profile_image_url" name="profile_image_url" class="form-control" value="{{ form_data.profile_image_url if form_data.profile_image_url else (current_user.profile_image_url or '') }}" placeholder="https://example.com/your-avatar.jpg">
-          <span class="form-hint">Must begin with http:// or https://. If omitted, your initials avatar will be shown.</span>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">

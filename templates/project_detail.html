@@ -22,7 +22,7 @@
             &#9733; Faculty / Department Verified
           </span>
         {% endif %}
-        <span style="font-size: 0.82rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">
+        <span class="category-label category-{{ project.category }}">
           {{ project.category }}
         </span>
       </div>
@@ -46,7 +46,7 @@
         <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Skills &amp; Technologies</h3>
         <div class="tag-list">
           {% for sk in project.skills %}
-            <span class="tag" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">{{ sk.name }}</span>
+            <span class="tag t{{ sk.name|skill_color }}" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">{{ sk.name }}</span>
           {% endfor %}
         </div>
       </div>
@@ -133,7 +133,7 @@
         <div class="card-body">
           <!-- Project Owner -->
           <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-            <div class="avatar">{{ project.owner.initials }}</div>
+            <div class="avatar avatar-tint-{{ project.owner.id % 6 }}">{{ project.owner.initials }}</div>
             <div>
               <a href="{{ url_for('profiles.view_profile', user_id=project.owner.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}" style="font-weight: 600; font-size: 0.95rem;">
                 {% if project.owner.role == 'faculty' %}Prof. {% endif %}{{ project.owner.display_name }}
@@ -152,7 +152,7 @@
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
               {% for member in project.members %}
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <div class="avatar" style="width: 36px; height: 36px; font-size: 0.85rem;">{{ member.initials }}</div>
+                  <div class="avatar avatar-tint-{{ member.id % 6 }}" style="width: 36px; height: 36px; font-size: 0.85rem;">{{ member.initials }}</div>
                   <div>
                     <a href="{{ url_for('profiles.view_profile', user_id=member.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}" style="font-weight: 500; font-size: 0.9rem;">
                       {{ member.display_name }}

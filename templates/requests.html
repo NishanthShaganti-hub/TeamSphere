@@ -31,7 +31,7 @@
             <div class="card-body">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <div class="avatar">{{ req.sender.initials }}</div>
+                  <div class="avatar avatar-tint-{{ req.sender.id % 6 }}">{{ req.sender.initials }}</div>
                   <div>
                     <h3 style="font-size: 1.05rem; margin-bottom: 0.15rem;">
                       <a href="{{ url_for('profiles.view_profile', user_id=req.sender.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}">
@@ -102,7 +102,7 @@
             <div class="card-body">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <div class="avatar">{{ req.recipient.initials }}</div>
+                  <div class="avatar avatar-tint-{{ req.recipient.id % 6 }}">{{ req.recipient.initials }}</div>
                   <div>
                     <h3 style="font-size: 1.05rem; margin-bottom: 0.15rem;">
                       <a href="{{ url_for('profiles.view_profile', user_id=req.recipient.id) if 'profiles.view_profile' in url_map_endpoints else '#' }}">

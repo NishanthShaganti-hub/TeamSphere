@@ -26,7 +26,7 @@ A clean, accessible web portal built for the **Department of Information Technol
    * Secure login with rate-limiting and generic failure messages.
    * Strict privacy: student email addresses and password hashes are never exposed.
 3. **Student Collaboration Profiles**:
-   * Profile creation and editing: department, year of study (1–6), bio (max 300 characters), skills chips, interests chips, and validated profile picture URL.
+   * Profile creation and editing: department, year of study (1–4), bio (max 300 characters), skills chips, and interests chips. Profiles use initials avatars and do not support profile pictures.
    * Public directory search via **Team Finder** (`/team-finder`).
 4. **Project Management & Department Archive**:
    * Project publishing, editing, and deletion with strict owner permission checks (HTTP 403 enforcement).
@@ -53,7 +53,6 @@ TeamSphere/
 ├── models.py              # Database schema (User, Project, Skill, Interest, TeamRequest, etc.)
 ├── forms.py               # WTForms definitions with validation rules
 ├── inspect_db.py          # CLI tool to inspect SQLite database tables
-├── seed.py                # Database seed script for development/demo
 ├── requirements.txt       # Pinned dependencies
 ├── .env.example           # Environment variable template
 ├── .gitignore             # Git ignore rules (excludes .env, *.db, venv/)
@@ -99,79 +98,265 @@ TeamSphere/
 
 ## Local Development Setup
 
+### Prerequisites
+
+Install Python 3.10 or newer and Git. The project uses SQLite by default. The `sqlite3` command-line program is optional and is only needed for direct terminal database commands.
+
 ### 1. Clone the repository and enter the directory
 ```bash
-git clone https://github.com/YOUR_USERNAME/TeamSphere.git
+git clone https://github.com/NishanthShaganti-hub/TeamSphere.git
 cd TeamSphere
 ```
 
-### 2. Set up a Python Virtual Environment
+### 2. Create and activate a virtual environment
+
+**macOS / Linux (bash or zsh):**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+**Windows (PowerShell):**
+
+```powershell
+py -3 -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again. Alternatively, use Command Prompt:
+
+```bat
+py -3 -m venv venv
+venv\Scripts\activate.bat
+```
+
+When activated, your prompt normally shows `(venv)`. Run `deactivate` to leave the environment.
+
+### 3. Install dependencies
+
+With the virtual environment active:
+
 ```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-Copy the `.env.example` file to `.env`:
+### 4. Configure environment variables
+
+Copy `.env.example` to `.env`.
+
+**macOS / Linux:**
+
 ```bash
 cp .env.example .env
 ```
-*(Optionally adjust `SECRET_KEY` or `ALLOWED_EMAIL_DOMAIN` if you wish to restrict registration to your university domain).*
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` to set a private `SECRET_KEY`. Generate one with:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Optionally set `ALLOWED_EMAIL_DOMAIN` to restrict student registration to a university email domain. Leave `DATABASE_URL` unset to use `instance/teamsphere.db`.
 
 ### 5. Initialize the SQLite Database
 ```bash
-flask --app app init-db
+python -m flask --app app init-db
 ```
+This creates missing tables. It does not erase data or change existing tables when the model schema changes. The database starts without demo listings; users add listings themselves using **Post a project**.
 
 ### 6. Create a Verified Faculty Account (Optional)
 ```bash
-flask --app app create-faculty --name "Prof. Name" --email "faculty@college.edu" --dept "Department of Information Technology" --password "YourPassword123!"
+python -m flask --app app create-faculty \
+  --name "Prof. Name" \
+  --email "faculty@college.edu" \
+  --dept "Department of Information Technology"
 ```
+The command prompts for a password. You can also pass `--password "YourPassword123!"`, but the prompt avoids storing it in shell history.
 
 ### 7. Run the Application
 ```bash
 python app.py
 ```
-Open your browser to:
-👉 **[http://127.0.0.1:5001/](http://127.0.0.1:5001/)**
+Open **[http://127.0.0.1:5001/](http://127.0.0.1:5001/)** in your browser. Stop the server with `Ctrl+C`. Port 5001 avoids the common macOS AirPlay Receiver conflict on port 5000.
 
-*(Note: Port 5001 is used by default to prevent conflicts with macOS Monterey/Ventura/Sonoma/Sequoia AirPlay Receiver which uses port 5000).*
+Alternatively, run Flask's development server:
+
+```bash
+python -m flask --app app run --host 127.0.0.1 --port 5001 --debug
+```
 
 ---
 
-## Inspecting the SQLite Database
+## Database Commands (SQLite)
 
-### Option A: Using the built-in terminal inspector
-Run:
+Commands below assume you are in the repository root and using the default database, `instance/teamsphere.db`. If `DATABASE_URL` is set in `.env`, use the path from that setting for SQLite commands. The app's custom Flask commands are `init-db` and `create-faculty`.
+
+### Initialize database tables
+
+```bash
+python -m flask --app app init-db
+```
+
+This is safe to rerun: it creates missing tables but does not migrate existing tables or delete records.
+
+### Apply model/schema changes
+
+For changes to database models, use Flask-Migrate rather than relying on `init-db` to alter existing tables. Initialize the migration repository once:
+
+```bash
+python -m flask --app app db init
+```
+
+For each model change, generate and apply a migration:
+
+```bash
+python -m flask --app app db migrate -m "Describe the schema change"
+python -m flask --app app db upgrade
+```
+
+Review generated files in `migrations/` before applying them, and commit those migration files with the model change. `db init` is only needed once per repository.
+
+### Inspect database contents
+
+Use the built-in inspector:
+
 ```bash
 python inspect_db.py
 ```
 
-### Option B: Using SQLite Command Line
+Or query SQLite directly (install the `sqlite3` command-line tool separately if it is unavailable):
+
 ```bash
-sqlite3 -table instance/teamsphere.db "SELECT id, display_name, email, role, department FROM users;"
-sqlite3 -table instance/teamsphere.db "SELECT id, title, category, status FROM projects;"
+sqlite3 -header -column instance/teamsphere.db "SELECT id, display_name, email, role, department, year_of_study FROM users;"
+sqlite3 -header -column instance/teamsphere.db "SELECT id, title, category, status, owner_id FROM projects;"
+sqlite3 -header -column instance/teamsphere.db "SELECT id, sender_id, recipient_id, project_id, status FROM team_requests;"
 ```
 
-### Option C: Using "DB Browser for SQLite" (GUI)
-1. Download and open [DB Browser for SQLite](https://sqlitebrowser.org/).
-2. Click **Open Database** and select `instance/teamsphere.db`.
-3. Click **Browse Data** to view and query any table.
+### Interactive SQLite commands
+
+Open a prompt:
+
+```bash
+sqlite3 instance/teamsphere.db
+```
+
+At `sqlite>`:
+
+```sql
+.tables
+.schema users
+.schema projects
+.headers on
+.mode column
+PRAGMA foreign_keys;
+SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;
+SELECT * FROM users;
+SELECT * FROM projects;
+.quit
+```
+
+Run a single statement without the interactive prompt:
+
+```bash
+sqlite3 instance/teamsphere.db "SELECT COUNT(*) FROM users;"
+```
+
+SQLite supports standard `SELECT`, `INSERT`, `UPDATE`, and `DELETE` statements. Use the web app for routine user and project management; direct SQL bypasses application validation and authorization. Back up before editing or deleting data. Examples (replace `123` with the intended project ID):
+
+```sql
+-- Find a user by email
+SELECT id, display_name, email, role FROM users WHERE email = 'student@college.edu';
+
+-- List projects, newest first
+SELECT id, title, category, status FROM projects ORDER BY id DESC;
+
+-- Update a project's status
+UPDATE projects SET status = 'completed' WHERE id = 123;
+
+--- Delete a project
+DELETE FROM projects WHERE id = 123;
+```
+
+For a group of related SQL changes, use a transaction so you can undo them before committing:
+
+```sql
+BEGIN;
+-- Run the intended UPDATE or DELETE statements here.
+ROLLBACK; -- use COMMIT instead when you want to keep the changes
+```
+
+### Back up or reset the local database
+
+Back up before maintenance:
+
+```bash
+cp instance/teamsphere.db instance/teamsphere.backup.db
+```
+
+PowerShell equivalent:
+
+```powershell
+Copy-Item instance/teamsphere.db instance/teamsphere.backup.db
+```
+
+Restore from that backup with the app stopped:
+
+```bash
+cp instance/teamsphere.backup.db instance/teamsphere.db
+```
+
+```powershell
+Copy-Item instance/teamsphere.backup.db instance/teamsphere.db
+```
+
+To intentionally reset local development data, stop the app and back up first, then remove the database and initialize a fresh one.
+
+**macOS / Linux:**
+
+```bash
+rm instance/teamsphere.db
+python -m flask --app app init-db
+```
+
+**Windows PowerShell:**
+
+```powershell
+Remove-Item instance\teamsphere.db
+python -m flask --app app init-db
+```
+
+Resetting removes all local users, projects, skills, interests, and requests in that database.
+
+### Optional SQLite GUI
+
+1. Download [DB Browser for SQLite](https://sqlitebrowser.org/).
+2. Open `instance/teamsphere.db`.
+3. Use **Browse Data** to inspect tables or **Execute SQL** to run queries.
 
 ---
 
 ## Running the Automated Test Suite
 
-The test suite runs against an isolated, in-memory SQLite database (`sqlite:///:memory:`) and will fail immediately if pointed at development data.
+The test suite runs against an isolated, in-memory SQLite database (`sqlite:///:memory:`), not the development database. Activate the virtual environment first.
 
-Run all 28 tests with pytest:
+Run all tests:
+
 ```bash
-pytest -v
+python -m pytest -v
+```
+
+Run one test file:
+
+```bash
+python -m pytest -v tests/test_stage2_ui.py
 ```
 
 ---

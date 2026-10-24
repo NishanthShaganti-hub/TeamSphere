@@ -15,9 +15,13 @@ def test_landing_page_renders_html(client):
     # Check semantic landmarks and content
     assert "<!DOCTYPE html>" in html
     assert "TeamSphere" in html
-    assert "Find teammates. Build something together." in html
-    assert "How TeamSphere Works" in html
-    assert "Recent Projects" in html
+    assert '<span class="brand-mark" aria-hidden="true">TS</span>' in html
+    assert ">TF</span>" not in html
+    assert "Find teammates." in html
+    assert "Build something together." in html
+    assert "A simple way to get started" in html
+    assert "Recent projects" in html
+    assert "Around the department" not in html
     assert 'name="csrf-token"' in html
     assert 'href="/static/css/style.css"' in html
     assert 'src="/static/js/main.js"' in html
@@ -28,9 +32,21 @@ def test_static_css_served(client):
     response = client.get("/static/css/style.css")
     assert response.status_code == 200
     css = response.get_data(as_text=True)
-    assert "--primary: #2f3e4e;" in css
-    assert "--bg: #f6f7f8;" in css
+    assert "--primary: #3b43b5;" in css
+    assert "--bg: #f4f5fb;" in css
     assert ".navbar-wrapper" in css
+    assert ".project-card-looking_for_teammates" in css
+    assert ".category-hackathon" in css
+    assert ".feature-card:nth-child(4)" in css
+    assert ".avatar-tint-5" in css
+    assert ".tag.t5" in css
+
+
+def test_skill_color_filter_returns_stable_palette_index(app):
+    """Verify skill tags map consistently into the six available palette colors."""
+    skill_color = app.jinja_env.filters["skill_color"]
+    assert skill_color("python") == skill_color("python")
+    assert 0 <= skill_color("python") <= 5
 
 
 def test_static_js_served(client):
@@ -41,6 +57,7 @@ def test_static_js_served(client):
     assert "showToast" in js
     assert "openModal" in js
     assert "fetchWithCsrf" in js
+    assert "initSearchShortcut" in js
 
 
 def test_404_custom_error_page(client):
@@ -84,3 +101,65 @@ def test_landing_page_shows_recent_projects(client, app):
     assert "Smart Campus Navigator" in html
     assert "Sarah Developer" in html
     assert "python" in html
+    assert "Around the department" in html
+    assert "projects looking for teammates" in html
+    assert "student collaborators" in html
+    assert "completed projects in the archive" in html
+    assert '<span class="hero-stat-number">1</span>' in html
+
+
+def test_projects_are_added_by_authenticated_owners(client):
+    """Verify the project board starts empty and accepts owner-submitted listings."""
+    response = client.get("/projects")
+    assert response.status_code == 200
+    assert "No projects posted yet." in response.get_data(as_text=True)
+
+    registration = client.post(
+        "/register",
+        data={
+            "display_name": "Project Owner",
+            "email": "owner@college.edu",
+            "password": "ownerpassword123",
+            "confirm_password": "ownerpassword123",
+        },
+    )
+    assert registration.status_code == 302
+
+    response = client.post(
+        "/projects/new",
+        data={
+            "title": "Student-submitted project",
+            "short_description": "A real project shared by its owner.",
+            "full_description": "Project details written by the authenticated owner.",
+            "category": "academic",
+            "status": "looking_for_teammates",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert "Student-submitted project" in response.get_data(as_text=True)
+
+
+def test_dashboard_shows_profile_progress_for_new_students(client, app):
+    """New students see a clear profile-completion next step on their dashboard."""
+    with app.app_context():
+        student = User(
+            display_name="New Student",
+            email="new-student@college.edu",
+        )
+        student.set_password("studentpassword123")
+        db.session.add(student)
+        db.session.commit()
+
+    client.post(
+        "/login",
+        data={"email": "new-student@college.edu", "password": "studentpassword123"},
+    )
+    response = client.get("/dashboard")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Make it easier for teammates to find you" in html
+    assert 'aria-valuenow="0"' in html
+    assert "Update your profile" in html
+    assert "My builds" in html

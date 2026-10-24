@@ -6,62 +6,81 @@
 <div class="container">
   <!-- Hero Section -->
   <section class="hero">
-    <h1 class="hero-title">Find teammates. Build something together.</h1>
-    <p class="hero-subtitle">
-      A dedicated department portal where students showcase academic and personal projects,
-      find collaborators with complementary skills, and explore a searchable archive of student work.
-    </p>
-    <div class="hero-actions">
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('projects.create_project') if 'projects.create_project' in url_map_endpoints else '#' }}" class="btn btn-primary btn-lg">
-          + Post a project
-        </a>
-        <a href="{{ url_for('requests.team_finder') if 'requests.team_finder' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-lg">
-          Find teammates
-        </a>
-      {% else %}
-        <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary btn-lg">
-          Get started
-        </a>
-        <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-lg">
-          Browse projects
-        </a>
-      {% endif %}
+    <div class="hero-copy">
+      <p class="hero-eyebrow">Department project directory</p>
+      <h1 class="hero-title">Find teammates.<br>Build something together.</h1>
+      <p class="hero-subtitle">
+        A shared notebook for student ideas, open projects, and the people ready to make them real.
+      </p>
+      <div class="hero-actions">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('projects.create_project') if 'projects.create_project' in url_map_endpoints else '#' }}" class="btn btn-primary btn-lg">
+            Post a project
+          </a>
+          <a href="{{ url_for('requests.team_finder') if 'requests.team_finder' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-lg">
+            Find teammates
+          </a>
+        {% else %}
+          <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary btn-lg">
+            Get started
+          </a>
+          <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-lg">
+            Browse projects
+          </a>
+        {% endif %}
+      </div>
     </div>
+    {% if open_project_count or student_count %}
+      <aside class="hero-stats" aria-label="Department activity">
+        <p class="hero-stats-label">Around the department</p>
+        <div class="hero-stat-row">
+          <span class="hero-stat-number">{{ open_project_count }}</span>
+          <span class="hero-stat-label">projects looking for teammates</span>
+        </div>
+        <div class="hero-stat-row">
+          <span class="hero-stat-number">{{ student_count }}</span>
+          <span class="hero-stat-label">student collaborators</span>
+        </div>
+        <div class="hero-stat-row">
+          <span class="hero-stat-number">{{ completed_project_count }}</span>
+          <span class="hero-stat-label">completed projects in the archive</span>
+        </div>
+      </aside>
+    {% endif %}
   </section>
 
   <!-- How It Works Section -->
   <section class="how-it-works" aria-labelledby="how-it-works-title">
     <div class="section-header">
       <div>
-        <h2 id="how-it-works-title" class="section-title">How TeamSphere Works</h2>
-        <p class="section-subtitle">Four simple steps to collaborate across departments</p>
+        <h2 id="how-it-works-title" class="section-title">A simple way to get started</h2>
+        <p class="section-subtitle">From first idea to a team that can make it happen.</p>
       </div>
     </div>
 
     <div class="feature-grid">
       <div class="card feature-card">
         <div class="feature-number">01</div>
-        <h3 class="feature-title">Build your profile</h3>
-        <p class="feature-text">List your technical skills, interests, year of study, and department. Student emails stay completely private.</p>
+        <h3 class="feature-title">Show what you’re into</h3>
+        <p class="feature-text">Add your skills and interests so people working on the right kind of project can find you.</p>
       </div>
 
       <div class="card feature-card">
         <div class="feature-number">02</div>
-        <h3 class="feature-title">Post or discover</h3>
-        <p class="feature-text">Publish an idea looking for teammates or explore active hackathons, research initiatives, and coursework builds.</p>
+        <h3 class="feature-title">Find your next build</h3>
+        <p class="feature-text">Browse class projects, hackathons, side quests, and research looking for a teammate like you.</p>
       </div>
 
       <div class="card feature-card">
         <div class="feature-number">03</div>
-        <h3 class="feature-title">Team up safely</h3>
-        <p class="feature-text">Send formal team-up requests with an optional note. Project owners review and accept in one atomic click.</p>
+        <h3 class="feature-title">Make the first move</h3>
+        <p class="feature-text">Send a quick team-up request, share what you bring, and start building together.</p>
       </div>
 
       <div class="card feature-card">
         <div class="feature-number">04</div>
-        <h3 class="feature-title">Department archive</h3>
-        <p class="feature-text">Completed projects remain permanently indexed as a rich archive of student innovations and past solutions.</p>
+        <h3 class="feature-title">Share the finished thing</h3>
+        <p class="feature-text">Showcase what your team made and leave inspiration for the next students to jump in.</p>
       </div>
     </div>
   </section>
@@ -70,8 +89,8 @@
   <section class="recent-projects" aria-labelledby="recent-projects-title">
     <div class="section-header">
       <div>
-        <h2 id="recent-projects-title" class="section-title">Recent Projects</h2>
-        <p class="section-subtitle">Explore recently posted projects looking for collaborators</p>
+        <h2 id="recent-projects-title" class="section-title">Recent projects</h2>
+        <p class="section-subtitle">Ideas and teams shared by your department</p>
       </div>
       <div>
         <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-sm">
@@ -83,7 +102,7 @@
     {% if recent_projects and recent_projects|length > 0 %}
       <div class="grid-3">
         {% for project in recent_projects %}
-          <div class="card card-hoverable">
+          <div class="card card-hoverable project-card project-card-{{ project.status }}">
             <div class="card-body">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.35rem;">
                 <div style="display: flex; gap: 0.4rem; align-items: center;">
@@ -96,12 +115,12 @@
                     </span>
                   {% endif %}
                 </div>
-                <span style="font-size: 0.78rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">
+                <span class="category-label category-{{ project.category }}">
                   {{ project.category }}
                 </span>
               </div>
 
-              <h3 style="margin-bottom: 0.4rem; font-size: 1.15rem;">
+              <h3 class="project-card-title" style="margin-bottom: 0.4rem; font-size: 1.15rem;">
                 <a href="{{ url_for('projects.project_detail', project_id=project.id) if 'projects.project_detail' in url_map_endpoints else '#' }}">
                   {{ project.title }}
                 </a>
@@ -113,7 +132,7 @@
 
               <div class="tag-list">
                 {% for skill in project.skills[:4] %}
-                  <span class="tag">{{ skill.name }}</span>
+                  <span class="tag t{{ skill.name|skill_color }}">{{ skill.name }}</span>
                 {% endfor %}
                 {% if project.skills|length > 4 %}
                   <span class="tag">+{{ project.skills|length - 4 }}</span>
@@ -138,8 +157,9 @@
       </div>
     {% else %}
       <div class="empty-state">
+        <span class="empty-state-mark" aria-hidden="true">+</span>
         <h3 class="empty-state-title">No projects posted yet</h3>
-        <p class="empty-state-text">Be the first student to publish a project idea and discover motivated teammates across the department!</p>
+        <p class="empty-state-text">Start something new and invite teammates to build it with you.</p>
         {% if current_user.is_authenticated %}
           <a href="{{ url_for('projects.create_project') if 'projects.create_project' in url_map_endpoints else '#' }}" class="btn btn-primary">
             + Post the first project
@@ -152,5 +172,15 @@
       </div>
     {% endif %}
   </section>
+
+  {% if completed_project_count %}
+    <section class="archive-teaser" aria-label="Completed projects">
+      <div>
+        <p class="archive-teaser-label">Department archive</p>
+        <h2>{{ completed_project_count }} completed project{{ 's' if completed_project_count != 1 else '' }}</h2>
+      </div>
+      <a href="{{ url_for('projects.browse_projects', status='archive') }}" class="btn btn-secondary">Explore completed work</a>
+    </section>
+  {% endif %}
 </div>
 {% endblock %}

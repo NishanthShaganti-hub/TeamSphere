@@ -93,7 +93,6 @@ class User(UserMixin, db.Model):
     department = db.Column(db.String(100), nullable=True)
     year_of_study = db.Column(db.Integer, nullable=True)
     bio = db.Column(db.String(300), nullable=True)
-    profile_image_url = db.Column(db.String(500), nullable=True)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
@@ -172,7 +171,6 @@ class User(UserMixin, db.Model):
             "department": self.department or "",
             "year_of_study": self.year_of_study,
             "bio": self.bio or "",
-            "profile_image_url": self.profile_image_url or "",
             "initials": self.initials,
             "skills": [s.name for s in self.skills],
             "interests": [i.name for i in self.interests],

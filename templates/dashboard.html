@@ -5,10 +5,13 @@
 {% block content %}
 <div class="container">
   <!-- Dashboard Header -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div class="dashboard-welcome" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Welcome back, {{ current_user.display_name }}!</h1>
-      <p style="color: var(--muted); margin-bottom: 0;">
+      <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Hey, {{ current_user.display_name }}!</h1>
+      <p class="welcome-prompt">
+        Ready to make something happen?
+      </p>
+      <p style="color: var(--muted); margin-top: 0.35rem; margin-bottom: 0; font-size: 0.88rem;">
         {{ current_user.department or 'Department of Information Technology' }} &bull; Year {{ current_user.year_of_study or '1' }}
       </p>
     </div>
@@ -22,23 +25,42 @@
     </div>
   </div>
 
+  {% if profile_completeness < 100 %}
+    <section class="profile-progress card" aria-labelledby="profile-progress-title">
+      <div class="profile-progress-header">
+        <div>
+          <p class="eyebrow">A little more about you</p>
+          <h2 id="profile-progress-title">Make it easier for teammates to find you</h2>
+        </div>
+        <strong class="profile-progress-value">{{ profile_completeness }}%</strong>
+      </div>
+      <div class="progress-track" role="progressbar" aria-label="Profile completeness" aria-valuenow="{{ profile_completeness }}" aria-valuemin="0" aria-valuemax="100">
+        <span style="width: {{ profile_completeness }}%;"></span>
+      </div>
+      <p class="profile-progress-hint">
+        {% if current_user.skills|length < 3 %}Add a few skills{% elif not current_user.bio %}Write a short bio{% elif not current_user.interests %}Add an interest{% else %}Fill in the remaining profile details{% endif %}
+        <a href="{{ url_for('profiles.edit_profile') }}">Update your profile</a>
+      </p>
+    </section>
+  {% endif %}
+
   <!-- Three Stat Cards -->
   <div class="grid-3" style="margin-bottom: 2.5rem;">
-    <div class="card" style="padding: 1.25rem;">
+    <div class="card dashboard-stat">
       <span style="font-size: 0.85rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">My Projects</span>
       <span style="font-size: 2rem; font-weight: 700; color: var(--text); margin-top: 0.35rem; display: block;">
         {{ my_projects|length }}
       </span>
     </div>
 
-    <div class="card" style="padding: 1.25rem;">
+    <div class="card dashboard-stat">
       <span style="font-size: 0.85rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">Requests to Review</span>
       <span style="font-size: 2rem; font-weight: 700; color: {% if requests_to_review|length > 0 %}var(--warn){% else %}var(--text){% endif %}; margin-top: 0.35rem; display: block;">
         {{ requests_to_review|length }}
       </span>
     </div>
 
-    <div class="card" style="padding: 1.25rem;">
+    <div class="card dashboard-stat">
       <span style="font-size: 0.85rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">Awaiting Reply</span>
       <span style="font-size: 2rem; font-weight: 700; color: var(--text); margin-top: 0.35rem; display: block;">
         {{ requests_awaiting|length }}
@@ -51,14 +73,14 @@
     <!-- Column 1: My Projects -->
     <div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.3rem;">My Projects</h2>
+        <h2 style="font-size: 1.3rem;">My builds</h2>
         <span style="font-size: 0.85rem; color: var(--muted);">{{ my_projects|length }} total</span>
       </div>
 
       {% if my_projects and my_projects|length > 0 %}
         <div style="display: flex; flex-direction: column; gap: 1rem;">
           {% for project in my_projects %}
-            <div class="card card-hoverable">
+            <div class="card card-hoverable project-card project-card-{{ project.status }}">
               <div class="card-body">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
                   <span class="badge badge-{{ project.status }}">
@@ -81,7 +103,7 @@
 
                 <div class="tag-list">
                   {% for s in project.skills[:3] %}
-                    <span class="tag">{{ s.name }}</span>
+                    <span class="tag t{{ s.name|skill_color }}">{{ s.name }}</span>
                   {% endfor %}
                 </div>
               </div>
@@ -118,7 +140,7 @@
     <!-- Column 2: Pending Requests to Review -->
     <div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.3rem;">Pending Requests</h2>
+        <h2 style="font-size: 1.3rem;">Team-up requests</h2>
         <a href="{{ url_for('requests.view_requests') if 'requests.view_requests' in url_map_endpoints else '#' }}" style="font-size: 0.85rem;">
           View all requests &rarr;
         </a>

@@ -16,12 +16,8 @@
       <div class="card" style="margin-bottom: 2rem;">
         <div class="card-body">
           <div style="display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <div class="avatar avatar-lg" style="width: 84px; height: 84px; font-size: 1.8rem;">
-              {% if profile_user.profile_image_url %}
-                <img src="{{ profile_user.profile_image_url }}" alt="{{ profile_user.display_name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.parentElement.innerHTML='{{ profile_user.initials }}';">
-              {% else %}
-                {{ profile_user.initials }}
-              {% endif %}
+            <div class="avatar avatar-lg avatar-tint-{{ profile_user.id % 6 }}" style="width: 84px; height: 84px; font-size: 1.8rem;">
+              {{ profile_user.initials }}
             </div>
 
             <div style="flex: 1;">
@@ -66,7 +62,7 @@
             <h2 style="font-size: 1.05rem; margin-bottom: 0.4rem;">Skills</h2>
             <div class="tag-list">
               {% for s in profile_user.skills %}
-                <span class="tag" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">{{ s.name }}</span>
+                <span class="tag t{{ s.name|skill_color }}" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">{{ s.name }}</span>
               {% endfor %}
               {% if profile_user.skills|length == 0 %}
                 <span style="font-size: 0.88rem; color: var(--muted); font-style: italic;">No skills added yet.</span>
@@ -79,7 +75,7 @@
             <h2 style="font-size: 1.05rem; margin-bottom: 0.4rem;">Interests &amp; Topics</h2>
             <div class="tag-list">
               {% for i in profile_user.interests %}
-                <span class="tag" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; background-color: #f0f4f8;">{{ i.name }}</span>
+                <span class="tag t{{ i.name|skill_color }}" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">{{ i.name }}</span>
               {% endfor %}
               {% if profile_user.interests|length == 0 %}
                 <span style="font-size: 0.88rem; color: var(--muted); font-style: italic;">No interests added yet.</span>
@@ -95,7 +91,7 @@
                 Collaboration Request Pending
               </button>
             {% else %}
-              <button type="button" class="btn btn-primary" onclick="openModal('profile-collab-modal')">
+              <button type="button" class="btn btn-teal" onclick="openModal('profile-collab-modal')">
                 Collaborate with {{ profile_user.display_name }}
               </button>
             {% endif %}

@@ -49,13 +49,12 @@ def view_profile(user_id: int):
 @profiles_bp.route("/profile/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
-    """Edit student profile details (department, year, bio, skills, image URL)."""
+    """Edit student profile details (department, year, bio, and skills)."""
     if request.method == "POST":
         display_name = request.form.get("display_name", "").strip()
         department = request.form.get("department", "").strip()
         year_str = request.form.get("year_of_study", "").strip()
         bio = request.form.get("bio", "").strip()
-        profile_image_url = request.form.get("profile_image_url", "").strip()
         raw_skills = request.form.get("skills", "").strip()
         raw_interests = request.form.get("interests", "").strip()
 
@@ -67,16 +66,13 @@ def edit_profile():
         if year_str:
             try:
                 year = int(year_str)
-                if year < 1 or year > 6:
-                    errors.append("Year of study must be between 1 and 6.")
+                if year < 1 or year > 4:
+                    errors.append("Year of study must be between 1 and 4.")
             except ValueError:
                 errors.append("Year of study must be a valid integer.")
 
         if bio and len(bio) > 300:
             errors.append("Bio cannot exceed 300 characters.")
-
-        if profile_image_url and not (profile_image_url.startswith("http://") or profile_image_url.startswith("https://")):
-            errors.append("Profile image URL must begin with http:// or https://")
 
         if errors:
             for err in errors:
@@ -88,7 +84,6 @@ def edit_profile():
         current_user.department = department or "Department of Information Technology"
         current_user.year_of_study = year
         current_user.bio = bio or None
-        current_user.profile_image_url = profile_image_url or None
 
         # Update normalized skills (max 10 items, max 30 chars each)
         current_user.skills.clear()

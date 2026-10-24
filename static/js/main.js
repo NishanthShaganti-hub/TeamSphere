@@ -5,6 +5,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   initMobileNav();
+  initSearchShortcut();
   initCharCounters();
   initDismissableAlerts();
 });
@@ -29,6 +30,25 @@ function initMobileNav() {
     if (!navMenu.contains(event.target) && !toggleBtn.contains(event.target) && navMenu.classList.contains("is-open")) {
       navMenu.classList.remove("is-open");
       toggleBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
+/**
+ * Focus the page search when "/" is pressed outside an editable control.
+ */
+function initSearchShortcut() {
+  const search = document.getElementById("project-search") || document.getElementById("student-search");
+  if (!search) return;
+
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const isEditing = target instanceof HTMLElement
+      && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+    if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !isEditing) {
+      event.preventDefault();
+      search.focus();
     }
   });
 }
