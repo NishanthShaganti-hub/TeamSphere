@@ -52,7 +52,8 @@ def test_database_isolation_guard():
 def test_vercel_uses_production_config(monkeypatch):
     """Vercel deployments require production secrets and a hosted database."""
     monkeypatch.setenv("VERCEL", "1")
-    monkeypatch.setenv("SECRET_KEY", "test-production-secret")
+    production_secret = "s" * 64
+    monkeypatch.setenv("SECRET_KEY", production_secret)
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@example.com/teamsphere")
     monkeypatch.setenv("FLASK_ENV", "development")
 
@@ -60,6 +61,7 @@ def test_vercel_uses_production_config(monkeypatch):
 
     assert vercel_app.config["DEBUG"] is False
     assert vercel_app.config["SESSION_COOKIE_SECURE"] is True
+    assert vercel_app.config["SECRET_KEY"] == production_secret
     assert vercel_app.config["SQLALCHEMY_DATABASE_URI"] == (
         "postgresql+psycopg://user:password@example.com/teamsphere"
     )
@@ -81,6 +83,36 @@ def test_production_requires_secrets(monkeypatch):
 
     monkeypatch.setenv("SECRET_KEY", "replace-with-a-secure-random-secret-key")
     with pytest.raises(ValueError, match="SECRET_KEY"):
+        ProductionConfig.validate()
+
+
+def test_production_rejects_malformed_database_url_without_echoing_it(monkeypatch):
+    """Invalid PostgreSQL URLs fail clearly without exposing their contents."""
+    monkeypatch.setenv("SECRET_KEY", "s" * 64)
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql://private-user:private-password@db.example.com:port/teamsphere",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="DATABASE_URL is not a valid PostgreSQL connection URL",
+    ) as exc_info:
+        ProductionConfig.validate()
+
+    assert "private-user" not in str(exc_info.value)
+    assert "private-password" not in str(exc_info.value)
+
+
+def test_production_rejects_non_postgresql_database_url(monkeypatch):
+    """Production cannot silently use SQLite or a local socket database."""
+    monkeypatch.setenv("SECRET_KEY", "s" * 64)
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///local.db")
+
+    with pytest.raises(
+        ValueError,
+        match="DATABASE_URL must be a hosted PostgreSQL URL",
+    ):
         ProductionConfig.validate()
 
 

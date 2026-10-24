@@ -1,6 +1,8 @@
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 # Load environment variables from .env file if present
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".env"))
@@ -70,17 +72,39 @@ class ProductionConfig(Config):
 
     @classmethod
     def validate(cls):
-        """Ensure critical secrets are configured in production."""
-        secret = os.environ.get("SECRET_KEY")
+        """Validate required production secrets and PostgreSQL connection settings."""
+        secret = os.environ.get("SECRET_KEY", "").strip()
         if (
             not secret
+            or len(secret) < 32
             or "dev-insecure" in secret
             or secret == "replace-with-a-secure-random-secret-key"
         ):
-            raise ValueError("SECRET_KEY must be set to a secure, random value in production!")
-        cls.SQLALCHEMY_DATABASE_URI = database_uri_from_env()
-        if not cls.SQLALCHEMY_DATABASE_URI:
-            raise ValueError("DATABASE_URL must be set in production!")
+            raise ValueError(
+                "SECRET_KEY must be set to a random value of at least 32 characters in production."
+            )
+
+        database_uri = database_uri_from_env()
+        if not database_uri:
+            raise ValueError("DATABASE_URL must be set to a hosted PostgreSQL database in production.")
+        try:
+            parsed_uri = make_url(database_uri)
+        except (ArgumentError, ValueError):
+            raise ValueError(
+                "DATABASE_URL is not a valid PostgreSQL connection URL. Check its format and URL-encode special characters in credentials."
+            ) from None
+
+        if (
+            parsed_uri.drivername != "postgresql+psycopg"
+            or not parsed_uri.host
+            or not parsed_uri.database
+        ):
+            raise ValueError(
+                "DATABASE_URL must be a hosted PostgreSQL URL with a hostname and database name."
+            )
+
+        cls.SECRET_KEY = secret
+        cls.SQLALCHEMY_DATABASE_URI = database_uri
 
 
 config_by_name = {

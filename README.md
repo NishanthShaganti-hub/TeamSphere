@@ -213,8 +213,8 @@ Vercel runs the Flask app from the root `app.py` entrypoint. Static assets are i
 
 1. Import `NishanthShaganti-hub/TeamSphere` into Vercel and select the repository root as the project root. Vercel detects the Flask app and Python dependencies from `app.py` and `requirements.txt`.
 2. Configure these environment variables in the Vercel project for Production and Preview:
-   * `SECRET_KEY`: a long, random value; do not use the example or development key.
-   * `DATABASE_URL`: the connection URL for your hosted PostgreSQL database. Use the provider's pooled URL if required by its Vercel/serverless guidance. Both `postgres://` and `postgresql://` URLs are normalized to use psycopg 3.
+   * `SECRET_KEY`: a random value of at least 32 characters; do not use the example or development key. Generate one locally with `openssl rand -hex 32`. Never commit or share it.
+   * `DATABASE_URL`: the raw connection URL for your hosted PostgreSQL database, not a `psql` command or a quoted value. Use the provider's pooled URL if required by its Vercel/serverless guidance. Both `postgres://` and `postgresql://` URLs are normalized to use psycopg 3. URL-encode reserved characters in the username or password.
    * `FLASK_ENV`: `production`.
    * Optionally set `ALLOWED_EMAIL_DOMAIN` to limit registration to your institution.
 3. Initialize the hosted database schema once from a trusted machine with the same `SECRET_KEY` and `DATABASE_URL` configured in its environment:
@@ -224,7 +224,7 @@ Vercel runs the Flask app from the root `app.py` entrypoint. Static assets are i
    ```
 
    This creates missing tables only; it does not migrate existing tables. For later schema changes, create and apply Flask-Migrate migrations instead.
-4. Deploy from Vercel, or push a commit to the connected GitHub branch to trigger a deployment. Vercel sets secure session cookies and uses production configuration automatically.
+4. Confirm `SECRET_KEY` and `DATABASE_URL` are enabled for the deployment's environment. Vercel sets secure session cookies and selects production configuration automatically. After changing environment variables, redeploy so the new deployment receives them.
 
 The application uses PostgreSQL locally and in deployment. SQLite is supported only as a legacy data source for the one-time import described below.
 
