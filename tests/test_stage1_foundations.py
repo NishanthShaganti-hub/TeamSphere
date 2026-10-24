@@ -1,11 +1,12 @@
 """
 Stage 1 Tests: Application setup, configuration, database isolation,
-SQLite foreign keys enforcement, and constraints.
+PostgreSQL foreign keys enforcement, and constraints.
 """
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.engine import make_url
 from app import create_app
 from extensions import db
 from models import User, Project, Skill, ProjectMember, TeamRequest
@@ -16,7 +17,7 @@ def test_app_creation(app):
     """Verify application factory initializes correctly in testing mode."""
     assert app is not None
     assert app.config["TESTING"] is True
-    assert app.config["SQLALCHEMY_DATABASE_URI"] == "sqlite:///:memory:"
+    assert app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql+psycopg://")
 
 
 def test_health_check_endpoint(client):
@@ -36,7 +37,13 @@ def test_database_isolation_guard():
 
     # Replicate the conftest guard logic
     with pytest.raises(RuntimeError) as exc_info:
-        if not is_testing or (db_uri != "sqlite:///:memory:" and "test" not in db_uri.lower()):
+        parsed_uri = make_url(db_uri)
+        database_name = (parsed_uri.database or "").lower()
+        if (
+            not is_testing
+            or parsed_uri.drivername != "postgresql+psycopg"
+            or "test" not in database_name
+        ):
             raise RuntimeError("FATAL SAFETY VIOLATION: Test suite attempted to run against a non-test database")
 
     assert "FATAL SAFETY VIOLATION" in str(exc_info.value)
@@ -77,11 +84,11 @@ def test_production_requires_secrets(monkeypatch):
         ProductionConfig.validate()
 
 
-def test_sqlite_foreign_keys_pragma_enabled(app):
-    """Verify that SQLite connection event listener enables PRAGMA foreign_keys = ON."""
+def test_postgresql_database_is_used(app):
+    """Verify that tests connect using PostgreSQL."""
     with app.app_context():
-        result = db.session.execute(text("PRAGMA foreign_keys;")).scalar()
-        assert result == 1, "SQLite foreign keys must be enabled (result should be 1)"
+        result = db.session.execute(text("SELECT version();")).scalar()
+        assert "PostgreSQL" in result
 
 
 def test_foreign_key_enforcement_on_insert(app):

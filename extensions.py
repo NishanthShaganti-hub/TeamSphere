@@ -9,8 +9,6 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
 
 # Database ORM
 db = SQLAlchemy()
@@ -33,15 +31,3 @@ limiter = Limiter(
 
 # Database schema migrations
 migrate = Migrate()
-
-
-# SQLite Foreign Keys Enforcement
-# By default, SQLite disables foreign key constraints for backwards compatibility.
-# This listener executes 'PRAGMA foreign_keys = ON' whenever an SQLite connection is opened.
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """Enable foreign key constraints on all SQLite connections."""
-    if type(dbapi_connection).__module__.startswith("sqlite3"):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys = ON;")
-        cursor.close()

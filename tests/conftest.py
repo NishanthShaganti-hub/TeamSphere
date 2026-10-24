@@ -4,6 +4,7 @@ Enforces strict test database isolation so the development database is never tou
 """
 
 import pytest
+from sqlalchemy.engine import make_url
 from app import create_app
 from extensions import db
 from config import TestingConfig
@@ -14,14 +15,20 @@ def app():
     """Create and configure a Flask application instance for testing."""
     test_app = create_app(TestingConfig)
 
-    # SAFETY GUARD: Ensure tests never target the development database
+    # SAFETY GUARD: Tests must use a dedicated PostgreSQL test database.
     db_uri = test_app.config.get("SQLALCHEMY_DATABASE_URI", "")
     is_testing = test_app.config.get("TESTING", False)
+    parsed_uri = make_url(db_uri)
+    database_name = (parsed_uri.database or "").lower()
 
-    if not is_testing or (db_uri != "sqlite:///:memory:" and "test" not in db_uri.lower()):
+    if (
+        not is_testing
+        or parsed_uri.drivername != "postgresql+psycopg"
+        or "test" not in database_name
+    ):
         raise RuntimeError(
             f"FATAL SAFETY VIOLATION: Test suite attempted to run against a non-test database: '{db_uri}'. "
-            "Tests must strictly use an in-memory SQLite database ('sqlite:///:memory:') or a dedicated test database."
+            "Set TEST_DATABASE_URL to a dedicated PostgreSQL database with 'test' in its name."
         )
 
     return test_app

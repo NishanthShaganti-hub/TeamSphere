@@ -15,11 +15,12 @@ venv.bak/
 .env.local
 .env.*.local
 
-# SQLite database files and instance folder
+# Local database files and backups
 instance/
 *.db
 *.sqlite
 *.sqlite3
+*.dump
 
 # Pytest and test artifacts
 .pytest_cache/

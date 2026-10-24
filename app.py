@@ -97,7 +97,7 @@ def create_app(config_object_or_name=None) -> Flask:
     app.config.from_object(config_class)
     app.add_template_filter(skill_color, "skill_color")
 
-    # Ensure instance directory exists for SQLite database storage
+    # Ensure instance directory exists for local instance data.
     try:
         os.makedirs(app.instance_path, exist_ok=True)
     except OSError:
@@ -150,7 +150,7 @@ def create_app(config_object_or_name=None) -> Flask:
     app.register_blueprint(projects_bp)
     app.register_blueprint(requests_bp)
 
-    # CLI Command to initialize tables in SQLite database
+    # CLI command to initialize tables in the configured PostgreSQL database.
     @app.cli.command("init-db")
     def init_db_command():
         """Create database tables."""

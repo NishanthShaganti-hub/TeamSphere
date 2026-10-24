@@ -1,7 +1,7 @@
 """
 Quick database inspection tool for TeamSphere.
 Run with: python inspect_db.py
-Displays formatted tables of all users, projects, and requests stored in SQLite.
+Displays formatted tables of all users, projects, and requests in the configured database.
 """
 
 from app import create_app
@@ -12,7 +12,7 @@ app = create_app()
 def inspect():
     with app.app_context():
         print("\n" + "=" * 70)
-        print(" TEAMSPHERE SQLITE DATABASE: instance/teamsphere.db")
+        print(f" TEAMSPHERE DATABASE: {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1]}")
         print("=" * 70)
 
         # 1. Users Table

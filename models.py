@@ -255,14 +255,13 @@ class TeamRequest(db.Model):
 
     __table_args__ = (
         # Partial unique index: prevents duplicate pending requests between sender, recipient, and project
-        # COALESCE(project_id, 0) handles NULL project_id for student-to-student requests in SQLite
+        # COALESCE(project_id, 0) handles NULL project_id for direct collaboration requests.
         Index(
             "idx_team_requests_pending_unique",
             "sender_id",
             "recipient_id",
             func.coalesce(project_id, 0),
             unique=True,
-            sqlite_where=text("status = 'pending'"),
             postgresql_where=text("status = 'pending'"),
         ),
     )

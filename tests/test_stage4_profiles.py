@@ -33,7 +33,7 @@ def test_edit_profile_saves_to_database(client, app):
             "display_name": "Alice S. Senior",
             "department": "Department of Information Technology",
             "year_of_study": "4",
-            "bio": "Passionate about full-stack web and database design with SQLite.",
+            "bio": "Passionate about full-stack web and database design with PostgreSQL.",
             "skills": "python, flask, sql",
             "interests": "cloud computing, ai ethics",
         },
@@ -44,7 +44,7 @@ def test_edit_profile_saves_to_database(client, app):
 
     # Check updated content is visible
     assert "Alice S. Senior" in html
-    assert "Passionate about full-stack web and database design with SQLite." in html
+    assert "Passionate about full-stack web and database design with PostgreSQL." in html
     assert "python" in html
     assert "sql" in html
 
@@ -53,7 +53,7 @@ def test_edit_profile_saves_to_database(client, app):
         updated_user = db.session.get(User, user_id)
         assert updated_user.display_name == "Alice S. Senior"
         assert updated_user.year_of_study == 4
-        assert updated_user.bio == "Passionate about full-stack web and database design with SQLite."
+        assert updated_user.bio == "Passionate about full-stack web and database design with PostgreSQL."
         user_skills = [s.name for s in updated_user.skills]
         assert "python" in user_skills
         assert "flask" in user_skills

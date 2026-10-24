@@ -2,21 +2,22 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Base directory of the application
-basedir = os.path.abspath(os.path.dirname(__file__))
-
 # Load environment variables from .env file if present
-load_dotenv(os.path.join(basedir, ".env"))
+load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".env"))
 
 
-def database_uri_from_env():
-    """Normalize common PostgreSQL URLs for the psycopg 3 SQLAlchemy driver."""
-    uri = os.environ.get("DATABASE_URL")
+def normalize_database_uri(uri):
+    """Normalize PostgreSQL URLs for the psycopg 3 SQLAlchemy driver."""
     if uri and uri.startswith("postgres://"):
         return "postgresql+psycopg://" + uri[len("postgres://"):]
     if uri and uri.startswith("postgresql://"):
         return "postgresql+psycopg://" + uri[len("postgresql://"):]
     return uri
+
+
+def database_uri_from_env():
+    """Return the configured application database URL."""
+    return normalize_database_uri(os.environ.get("DATABASE_URL"))
 
 
 class Config:
@@ -45,16 +46,16 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration with debugging enabled."""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = database_uri_from_env() or (
-        f"sqlite:///{os.path.join(basedir, 'instance', 'teamsphere.db')}"
-    )
+    SQLALCHEMY_DATABASE_URI = database_uri_from_env() or "postgresql+psycopg:///teamsphere"
 
 
 class TestingConfig(Config):
     """Testing configuration isolated from development database."""
     TESTING = True
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_DATABASE_URI = normalize_database_uri(
+        os.environ.get("TEST_DATABASE_URL")
+    ) or "postgresql+psycopg:///teamsphere_test"
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     SECRET_KEY = "test-secret-key-never-used-in-production"

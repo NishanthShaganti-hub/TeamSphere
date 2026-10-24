@@ -7,12 +7,12 @@ A clean, accessible web portal built for the **Department of Information Technol
 ## Technology Stack
 
 * **Backend**: Python 3.10+ with Flask (Application Factory pattern & Blueprints).
-* **Database**: SQLite (stored locally under `instance/teamsphere.db`).
-* **ORM**: Flask-SQLAlchemy with SQLAlchemy connection listener enforcing `PRAGMA foreign_keys = ON`.
+* **Database**: PostgreSQL via psycopg 3.
+* **ORM**: Flask-SQLAlchemy with PostgreSQL foreign-key constraints and partial unique indexes.
 * **Authentication**: Flask-Login with Werkzeug password hashing and pre-login session clearing.
 * **Security & Forms**: Flask-WTF (CSRF protection on all POST requests), Flask-Limiter (rate limiting), and safe local redirect handling.
 * **Frontend**: Server-rendered Jinja templates, custom responsive Vanilla CSS (custom design system), and accessible Vanilla JavaScript (modals, toast alerts, skill chips).
-* **Testing**: Pytest with test isolation guard against in-memory SQLite (`sqlite:///:memory:`).
+* **Testing**: Pytest using a dedicated PostgreSQL test database (`teamsphere_test` by default).
 
 ---
 
@@ -49,10 +49,11 @@ A clean, accessible web portal built for the **Department of Information Technol
 TeamSphere/
 ├── app.py                 # Application factory (create_app), CLI commands & server entry
 ├── config.py              # Environment configuration (Development, Testing, Production)
-├── extensions.py          # SQLAlchemy, LoginManager, CSRFProtect, Limiter & SQLite listener
+├── extensions.py          # SQLAlchemy, LoginManager, CSRFProtect, Limiter & migrations
 ├── models.py              # Database schema (User, Project, Skill, Interest, TeamRequest, etc.)
 ├── forms.py               # WTForms definitions with validation rules
-├── inspect_db.py          # CLI tool to inspect SQLite database tables
+├── inspect_db.py          # CLI tool to inspect the configured database
+├── migrate_sqlite_to_postgres.py # One-time import from an existing SQLite database
 ├── requirements.txt       # Pinned dependencies
 ├── .env.example           # Environment variable template
 ├── .gitignore             # Git ignore rules (excludes .env, *.db, venv/)
@@ -85,7 +86,7 @@ TeamSphere/
 ├── public/static/
 │   ├── css/style.css      # Custom design system with CSS tokens and responsive rules
 │   └── js/main.js         # Mobile nav, toasts, modals, character counter, chips
-├── instance/              # SQLite database storage (teamsphere.db)
+├── instance/              # Local instance data and legacy SQLite database
 └── tests/
     ├── conftest.py        # Pytest fixtures and test database isolation guard
     ├── test_stage1_foundations.py
@@ -100,7 +101,7 @@ TeamSphere/
 
 ### Prerequisites
 
-Install Python 3.10 or newer and Git. The project uses SQLite by default. The `sqlite3` command-line program is optional and is only needed for direct terminal database commands.
+Install Python 3.10 or newer, Git, and PostgreSQL. The default local connection uses PostgreSQL's local socket and the database name `teamsphere`; configure `DATABASE_URL` in `.env` if your PostgreSQL installation uses different credentials.
 
 ### 1. Clone the repository and enter the directory
 ```bash
@@ -164,13 +165,24 @@ Edit `.env` to set a private `SECRET_KEY`. Generate one with:
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Optionally set `ALLOWED_EMAIL_DOMAIN` to restrict student registration to a university email domain. Leave `DATABASE_URL` unset to use `instance/teamsphere.db`.
+Set `DATABASE_URL` to your local PostgreSQL connection URL, for example `postgresql+psycopg://USER:PASSWORD@localhost:5432/teamsphere`. Optionally set `ALLOWED_EMAIL_DOMAIN` to restrict student registration to a university email domain.
 
-### 5. Initialize the SQLite Database
+### 5. Create and initialize the PostgreSQL database
+
+Create the local application database and the separate test database:
+
+```bash
+createdb teamsphere
+createdb teamsphere_test
+```
+
+If your PostgreSQL account requires a password or uses a different role, set `DATABASE_URL` in `.env` before continuing.
+
 ```bash
 python -m flask --app app init-db
 ```
-This creates missing tables. It does not erase data or change existing tables when the model schema changes. The database starts without demo listings; users add listings themselves using **Post a project**.
+
+This creates missing tables in PostgreSQL. It does not erase data or change existing tables when the model schema changes. The database starts without demo listings; users add listings themselves using **Post a project**.
 
 ### 6. Create a Verified Faculty Account (Optional)
 ```bash
@@ -214,13 +226,13 @@ Vercel runs the Flask app from the root `app.py` entrypoint. Static assets are i
    This creates missing tables only; it does not migrate existing tables. For later schema changes, create and apply Flask-Migrate migrations instead.
 4. Deploy from Vercel, or push a commit to the connected GitHub branch to trigger a deployment. Vercel sets secure session cookies and uses production configuration automatically.
 
-SQLite is intended for local development only on Vercel: serverless filesystems are ephemeral, so use hosted PostgreSQL to retain accounts and project data.
+The application uses PostgreSQL locally and in deployment. SQLite is supported only as a legacy data source for the one-time import described below.
 
 ---
 
-## Database Commands (SQLite)
+## PostgreSQL Database Commands
 
-Commands below assume you are in the repository root and using the default database, `instance/teamsphere.db`. If `DATABASE_URL` is set in `.env`, use the path from that setting for SQLite commands. The app's custom Flask commands are `init-db` and `create-faculty`.
+Commands below assume PostgreSQL is running and `DATABASE_URL` is configured in `.env`. The app's custom Flask commands are `init-db` and `create-faculty`.
 
 ### Initialize database tables
 
@@ -255,44 +267,40 @@ Use the built-in inspector:
 python inspect_db.py
 ```
 
-Or query SQLite directly (install the `sqlite3` command-line tool separately if it is unavailable):
+Or query PostgreSQL using `psql`:
 
 ```bash
-sqlite3 -header -column instance/teamsphere.db "SELECT id, display_name, email, role, department, year_of_study FROM users;"
-sqlite3 -header -column instance/teamsphere.db "SELECT id, title, category, status, owner_id FROM projects;"
-sqlite3 -header -column instance/teamsphere.db "SELECT id, sender_id, recipient_id, project_id, status FROM team_requests;"
+psql "$DATABASE_URL" -c "SELECT id, display_name, email, role, department, year_of_study FROM users;"
+psql "$DATABASE_URL" -c "SELECT id, title, category, status, owner_id FROM projects;"
+psql "$DATABASE_URL" -c "SELECT id, sender_id, recipient_id, project_id, status FROM team_requests;"
 ```
 
-### Interactive SQLite commands
+### Interactive PostgreSQL commands
 
 Open a prompt:
 
 ```bash
-sqlite3 instance/teamsphere.db
+psql "$DATABASE_URL"
 ```
 
-At `sqlite>`:
+At `psql>`:
 
 ```sql
-.tables
-.schema users
-.schema projects
-.headers on
-.mode column
-PRAGMA foreign_keys;
-SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;
+\dt
+\d users
+\d projects
 SELECT * FROM users;
 SELECT * FROM projects;
-.quit
+\q
 ```
 
 Run a single statement without the interactive prompt:
 
 ```bash
-sqlite3 instance/teamsphere.db "SELECT COUNT(*) FROM users;"
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM users;"
 ```
 
-SQLite supports standard `SELECT`, `INSERT`, `UPDATE`, and `DELETE` statements. Use the web app for routine user and project management; direct SQL bypasses application validation and authorization. Back up before editing or deleting data. Examples (replace `123` with the intended project ID):
+Use the web app for routine user and project management; direct SQL bypasses application validation and authorization. Back up before editing or deleting data. Examples (replace `123` with the intended project ID):
 
 ```sql
 -- Find a user by email
@@ -321,54 +329,22 @@ ROLLBACK; -- use COMMIT instead when you want to keep the changes
 Back up before maintenance:
 
 ```bash
-cp instance/teamsphere.db instance/teamsphere.backup.db
+pg_dump "$DATABASE_URL" --format=custom --file=teamsphere.backup.dump
 ```
 
-PowerShell equivalent:
-
-```powershell
-Copy-Item instance/teamsphere.db instance/teamsphere.backup.db
-```
-
-Restore from that backup with the app stopped:
+To intentionally reset local development data, stop the app, confirm `DATABASE_URL` points to the local development database, then recreate it:
 
 ```bash
-cp instance/teamsphere.backup.db instance/teamsphere.db
-```
-
-```powershell
-Copy-Item instance/teamsphere.backup.db instance/teamsphere.db
-```
-
-To intentionally reset local development data, stop the app and back up first, then remove the database and initialize a fresh one.
-
-**macOS / Linux:**
-
-```bash
-rm instance/teamsphere.db
+dropdb teamsphere
+createdb teamsphere
 python -m flask --app app init-db
 ```
-
-**Windows PowerShell:**
-
-```powershell
-Remove-Item instance\teamsphere.db
-python -m flask --app app init-db
-```
-
-Resetting removes all local users, projects, skills, interests, and requests in that database.
-
-### Optional SQLite GUI
-
-1. Download [DB Browser for SQLite](https://sqlitebrowser.org/).
-2. Open `instance/teamsphere.db`.
-3. Use **Browse Data** to inspect tables or **Execute SQL** to run queries.
 
 ---
 
 ## Running the Automated Test Suite
 
-The test suite runs against an isolated, in-memory SQLite database (`sqlite:///:memory:`), not the development database. Activate the virtual environment first.
+The test suite uses a separate PostgreSQL database named `teamsphere_test` by default. It creates and drops application tables in that database, so never point `TEST_DATABASE_URL` to development or production data. Create the test database once with `createdb teamsphere_test`. If needed, configure `TEST_DATABASE_URL` in `.env`. Activate the virtual environment before running tests.
 
 Run all tests:
 
@@ -384,14 +360,31 @@ python -m pytest -v tests/test_stage2_ui.py
 
 ---
 
-## Future Deployment & PostgreSQL Considerations
+## PostgreSQL Deployment
 
-TeamSphere uses SQLAlchemy ORM models, making a future transition to PostgreSQL straightforward. However, moving to PostgreSQL requires:
-1. Configuring a managed PostgreSQL instance with persistent storage (local SQLite files are reset on ephemeral hosts like Render or Heroku).
+TeamSphere uses PostgreSQL both locally and in production. For deployment:
+1. Configure a managed PostgreSQL instance with persistent storage.
 2. Updating the database connection string in `.env` (`DATABASE_URL=postgresql://user:pass@host/dbname`).
-3. Ensuring the SQLite `PRAGMA foreign_keys = ON` listener only runs when dialect is `sqlite3` (already implemented).
-4. Ensuring partial unique index expressions (`postgresql_where`) are verified against your PostgreSQL version.
-5. Case-insensitive search: TeamSphere uses `.ilike()` for PostgreSQL compatibility.
+3. The database schema uses PostgreSQL foreign keys and partial unique indexes.
+4. Case-insensitive search uses SQLAlchemy `.ilike()`.
+
+## Import existing SQLite data
+
+The one-time importer reads `instance/teamsphere.db` by default and copies records into the PostgreSQL database selected by `DATABASE_URL`. It refuses to write into a PostgreSQL database that already contains application data. Back up both databases first:
+
+```bash
+cp instance/teamsphere.db instance/teamsphere.backup.db
+pg_dump "$DATABASE_URL" --format=custom --file=teamsphere.before-import.dump
+python migrate_sqlite_to_postgres.py
+```
+
+To import a different SQLite file:
+
+```bash
+python migrate_sqlite_to_postgres.py --source instance/app.db
+```
+
+Verify record counts in PostgreSQL before normal use, and keep the SQLite backup until the migration has been checked.
 
 ---
 
