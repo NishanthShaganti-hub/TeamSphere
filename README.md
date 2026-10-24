@@ -82,7 +82,7 @@ TeamSphere/
 │   ├── team_finder.html   # Student directory search
 │   ├── requests.html      # Sent and received collaboration requests
 │   └── errors/            # Custom 403, 404, 500 error templates
-├── static/
+├── public/static/
 │   ├── css/style.css      # Custom design system with CSS tokens and responsive rules
 │   └── js/main.js         # Mobile nav, toasts, modals, character counter, chips
 ├── instance/              # SQLite database storage (teamsphere.db)
@@ -192,6 +192,29 @@ Alternatively, run Flask's development server:
 ```bash
 python -m flask --app app run --host 127.0.0.1 --port 5001 --debug
 ```
+
+---
+
+## Deploy to Vercel
+
+Vercel runs the Flask app from the root `app.py` entrypoint. Static assets are in `public/static/`, which Vercel serves directly; Flask serves the same files locally at `/static/`.
+
+1. Import `NishanthShaganti-hub/TeamSphere` into Vercel and select the repository root as the project root. Vercel detects the Flask app and Python dependencies from `app.py` and `requirements.txt`.
+2. Configure these environment variables in the Vercel project for Production and Preview:
+   * `SECRET_KEY`: a long, random value; do not use the example or development key.
+   * `DATABASE_URL`: the connection URL for your hosted PostgreSQL database. Use the provider's pooled URL if required by its Vercel/serverless guidance. Both `postgres://` and `postgresql://` URLs are normalized to use psycopg 3.
+   * `FLASK_ENV`: `production`.
+   * Optionally set `ALLOWED_EMAIL_DOMAIN` to limit registration to your institution.
+3. Initialize the hosted database schema once from a trusted machine with the same `SECRET_KEY` and `DATABASE_URL` configured in its environment:
+
+   ```bash
+   FLASK_ENV=production python -m flask --app app init-db
+   ```
+
+   This creates missing tables only; it does not migrate existing tables. For later schema changes, create and apply Flask-Migrate migrations instead.
+4. Deploy from Vercel, or push a commit to the connected GitHub branch to trigger a deployment. Vercel sets secure session cookies and uses production configuration automatically.
+
+SQLite is intended for local development only on Vercel: serverless filesystems are ephemeral, so use hosted PostgreSQL to retain accounts and project data.
 
 ---
 

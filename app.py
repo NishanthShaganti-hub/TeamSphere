@@ -71,16 +71,28 @@ def create_app(config_object_or_name=None) -> Flask:
     Application factory pattern.
     Configures and returns a new Flask application instance.
     """
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        static_folder=os.path.join(os.path.dirname(__file__), "public", "static"),
+        static_url_path="/static",
+    )
 
     # Determine configuration class
     if config_object_or_name is None:
-        env_name = os.environ.get("FLASK_ENV", "development").lower()
+        env_name = (
+            "production"
+            if os.environ.get("VERCEL")
+            else os.environ.get("FLASK_ENV", "development").lower()
+        )
         config_class = config_by_name.get(env_name, DevelopmentConfig)
     elif isinstance(config_object_or_name, str):
         config_class = config_by_name.get(config_object_or_name, DevelopmentConfig)
     else:
         config_class = config_object_or_name
+
+    if config_class is config_by_name["production"]:
+        config_class.validate()
 
     app.config.from_object(config_class)
     app.add_template_filter(skill_color, "skill_color")

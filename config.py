@@ -9,6 +9,16 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, ".env"))
 
 
+def database_uri_from_env():
+    """Normalize common PostgreSQL URLs for the psycopg 3 SQLAlchemy driver."""
+    uri = os.environ.get("DATABASE_URL")
+    if uri and uri.startswith("postgres://"):
+        return "postgresql+psycopg://" + uri[len("postgres://"):]
+    if uri and uri.startswith("postgresql://"):
+        return "postgresql+psycopg://" + uri[len("postgresql://"):]
+    return uri
+
+
 class Config:
     """Base configuration shared across environments."""
     SECRET_KEY = os.environ.get("SECRET_KEY", "teamsphere-dev-insecure-secret-key-39184")
@@ -35,7 +45,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration with debugging enabled."""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or (
+    SQLALCHEMY_DATABASE_URI = database_uri_from_env() or (
         f"sqlite:///{os.path.join(basedir, 'instance', 'teamsphere.db')}"
     )
 
@@ -56,15 +66,19 @@ class ProductionConfig(Config):
     """Production configuration with strict security requirements."""
     DEBUG = False
     SESSION_COOKIE_SECURE = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
     @classmethod
     def validate(cls):
         """Ensure critical secrets are configured in production."""
         secret = os.environ.get("SECRET_KEY")
-        if not secret or "dev-insecure" in secret:
+        if (
+            not secret
+            or "dev-insecure" in secret
+            or secret == "replace-with-a-secure-random-secret-key"
+        ):
             raise ValueError("SECRET_KEY must be set to a secure, random value in production!")
-        if not os.environ.get("DATABASE_URL"):
+        cls.SQLALCHEMY_DATABASE_URI = database_uri_from_env()
+        if not cls.SQLALCHEMY_DATABASE_URI:
             raise ValueError("DATABASE_URL must be set in production!")
 
 

@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from app import create_app
 from extensions import db
 from models import User, Project, Skill, ProjectMember, TeamRequest
-from config import TestingConfig, DevelopmentConfig
+from config import TestingConfig, DevelopmentConfig, ProductionConfig, database_uri_from_env
 
 
 def test_app_creation(app):
@@ -40,6 +40,41 @@ def test_database_isolation_guard():
             raise RuntimeError("FATAL SAFETY VIOLATION: Test suite attempted to run against a non-test database")
 
     assert "FATAL SAFETY VIOLATION" in str(exc_info.value)
+
+
+def test_vercel_uses_production_config(monkeypatch):
+    """Vercel deployments require production secrets and a hosted database."""
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("SECRET_KEY", "test-production-secret")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@example.com/teamsphere")
+    monkeypatch.setenv("FLASK_ENV", "development")
+
+    vercel_app = create_app()
+
+    assert vercel_app.config["DEBUG"] is False
+    assert vercel_app.config["SESSION_COOKIE_SECURE"] is True
+    assert vercel_app.config["SQLALCHEMY_DATABASE_URI"] == (
+        "postgresql+psycopg://user:password@example.com/teamsphere"
+    )
+
+
+def test_postgres_url_normalization(monkeypatch):
+    """Common hosted PostgreSQL URL schemes use the configured psycopg 3 driver."""
+    monkeypatch.setenv("DATABASE_URL", "postgres://user:password@example.com/teamsphere")
+    assert database_uri_from_env() == "postgresql+psycopg://user:password@example.com/teamsphere"
+
+
+def test_production_requires_secrets(monkeypatch):
+    """Production configuration fails clearly if required deployment settings are absent."""
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        ProductionConfig.validate()
+
+    monkeypatch.setenv("SECRET_KEY", "replace-with-a-secure-random-secret-key")
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        ProductionConfig.validate()
 
 
 def test_sqlite_foreign_keys_pragma_enabled(app):
