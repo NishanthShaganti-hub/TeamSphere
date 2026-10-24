@@ -15,6 +15,11 @@ from blueprints.projects import projects_bp
 from blueprints.requests import requests_bp
 
 
+def skill_color(skill_name):
+    """Return a stable color class for a skill tag."""
+    return sum(ord(char) for char in skill_name) % 6
+
+
 def register_error_handlers(app: Flask):
     """Register custom error handlers for HTTP status codes."""
 
@@ -78,6 +83,7 @@ def create_app(config_object_or_name=None) -> Flask:
         config_class = config_object_or_name
 
     app.config.from_object(config_class)
+    app.add_template_filter(skill_color, "skill_color")
 
     # Ensure instance directory exists for SQLite database storage
     try:
