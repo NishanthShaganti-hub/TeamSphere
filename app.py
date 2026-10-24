@@ -155,7 +155,7 @@ def create_app(config_object_or_name=None) -> Flask:
     def init_db_command():
         """Create database tables."""
         db.create_all()
-        print(f"Database initialized successfully at: {app.config['SQLALCHEMY_DATABASE_URI']}")
+        click.echo("Database tables initialized successfully.")
 
     # CLI Command to create verified Faculty accounts
     @app.cli.command("create-faculty")
