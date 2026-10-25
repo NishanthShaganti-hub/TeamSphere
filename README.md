@@ -179,10 +179,10 @@ createdb teamsphere_test
 If your PostgreSQL account requires a password or uses a different role, set `DATABASE_URL` in `.env` before continuing.
 
 ```bash
-python -m flask --app app init-db
+python -m flask --app app db upgrade
 ```
 
-This creates missing tables in PostgreSQL. It does not erase data or change existing tables when the model schema changes. The database starts without demo listings; users add listings themselves using **Post a project**.
+This applies the committed initial migration to PostgreSQL without dropping existing data. The database starts without demo listings; users add listings themselves using **Post a project**.
 
 ### 6. Create a Verified Faculty Account (Optional)
 ```bash
@@ -220,10 +220,10 @@ Vercel runs the Flask app from the root `app.py` entrypoint. Static assets are i
 3. Initialize the hosted database schema once from a trusted machine with the same `SECRET_KEY` and `DATABASE_URL` configured in its environment:
 
    ```bash
-   FLASK_ENV=production python -m flask --app app init-db
+   FLASK_ENV=production python -m flask --app app db upgrade
    ```
 
-   This creates missing tables only; it does not migrate existing tables. For later schema changes, create and apply Flask-Migrate migrations instead.
+   This applies the committed Flask-Migrate revisions to the hosted PostgreSQL schema. Do not run `db create_all` automatically on Gunicorn worker startup.
 4. Confirm `SECRET_KEY` and `DATABASE_URL` are enabled for the deployment's environment. Vercel sets secure session cookies and selects production configuration automatically. After changing environment variables, redeploy so the new deployment receives them.
 
 The application uses PostgreSQL locally and in deployment. SQLite is supported only as a legacy data source for the one-time import described below.
@@ -232,32 +232,31 @@ The application uses PostgreSQL locally and in deployment. SQLite is supported o
 
 ## PostgreSQL Database Commands
 
-Commands below assume PostgreSQL is running and `DATABASE_URL` is configured in `.env`. The app's custom Flask commands are `init-db` and `create-faculty`.
+Commands below assume PostgreSQL is running and `DATABASE_URL` is configured in `.env`. The app's custom commands include `init-db` and `create-faculty`; schema changes should be applied with Flask-Migrate.
 
-### Initialize database tables
-
-```bash
-python -m flask --app app init-db
-```
-
-This is safe to rerun: it creates missing tables but does not migrate existing tables or delete records.
-
-### Apply model/schema changes
-
-For changes to database models, use Flask-Migrate rather than relying on `init-db` to alter existing tables. Initialize the migration repository once:
+### Apply committed schema migrations
 
 ```bash
-python -m flask --app app db init
-```
-
-For each model change, generate and apply a migration:
-
-```bash
-python -m flask --app app db migrate -m "Describe the schema change"
 python -m flask --app app db upgrade
 ```
 
-Review generated files in `migrations/` before applying them, and commit those migration files with the model change. `db init` is only needed once per repository.
+Run this once from a trusted shell configured with the target `DATABASE_URL`, then repeat after deploying each new migration. It applies pending revisions without dropping existing data.
+
+### Apply model/schema changes
+
+For changes to database models, generate a revision locally and review it before committing:
+
+```bash
+python -m flask --app app db migrate -m "Describe the schema change"
+```
+
+Then apply it:
+
+```bash
+python -m flask --app app db upgrade
+```
+
+Commit reviewed revisions in `migrations/versions/` with the model change. The initial migration repository is already included in this project.
 
 ### Inspect database contents
 
@@ -337,7 +336,7 @@ To intentionally reset local development data, stop the app, confirm `DATABASE_U
 ```bash
 dropdb teamsphere
 createdb teamsphere
-python -m flask --app app init-db
+python -m flask --app app db upgrade
 ```
 
 ---

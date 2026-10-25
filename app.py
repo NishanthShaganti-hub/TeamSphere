@@ -8,6 +8,7 @@ import click
 from flask import Flask, render_template, request, jsonify
 from config import config_by_name, DevelopmentConfig
 from extensions import db, login_manager, csrf, limiter, migrate
+import models  # Register all SQLAlchemy tables before Flask-Migrate inspects metadata.
 from blueprints.main import main_bp
 from blueprints.auth import auth_bp
 from blueprints.profiles import profiles_bp
