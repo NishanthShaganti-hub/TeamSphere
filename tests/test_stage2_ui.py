@@ -15,12 +15,13 @@ def test_landing_page_renders_html(client):
     # Check semantic landmarks and content
     assert "<!DOCTYPE html>" in html
     assert "TeamSphere" in html
-    assert '<span class="brand-mark" aria-hidden="true">TS</span>' in html
+    assert '<span class="brand-mark" aria-hidden="true">' in html
+    assert 'class="collaboration-art"' in html
     assert ">TF</span>" not in html
-    assert "Find teammates." in html
-    assert "Build something together." in html
-    assert "A simple way to get started" in html
-    assert "Recent projects" in html
+    assert "Find projects." in html
+    assert "Build the future." in html
+    assert "From idea to impact, together" in html
+    assert "Projects looking for you" in html
     assert "Around the department" not in html
     assert 'name="csrf-token"' in html
     assert 'href="/static/css/style.css"' in html
@@ -101,11 +102,8 @@ def test_landing_page_shows_recent_projects(client, app):
     assert "Smart Campus Navigator" in html
     assert "Sarah Developer" in html
     assert "python" in html
-    assert "Around the department" in html
-    assert "projects looking for teammates" in html
-    assert "student collaborators" in html
-    assert "completed projects in the archive" in html
-    assert '<span class="hero-stat-number">1</span>' in html
+    assert "Looking for teammates" in html
+    assert "<strong>1</strong> active project" in html
 
 
 def test_projects_are_added_by_authenticated_owners(client):

@@ -1,186 +1,218 @@
 {% extends "base.html" %}
 
-{% block title %}Find Teammates & Projects{% endblock %}
+{% block title %}TeamSphere — Find teammates. Build something together.{% endblock %}
+{% block meta_description %}Connect with talented people, discover meaningful projects, and build something great together on TeamSphere.{% endblock %}
 
 {% block content %}
-<div class="container">
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-copy">
-      <p class="hero-eyebrow">Department project directory</p>
-      <h1 class="hero-title">Find teammates.<br>Build something together.</h1>
-      <p class="hero-subtitle">
-        A shared notebook for student ideas, open projects, and the people ready to make them real.
-      </p>
-      <div class="hero-actions">
-        {% if current_user.is_authenticated %}
-          <a href="{{ url_for('projects.create_project') if 'projects.create_project' in url_map_endpoints else '#' }}" class="btn btn-primary btn-lg">
-            Post a project
-          </a>
-          <a href="{{ url_for('requests.team_finder') if 'requests.team_finder' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-lg">
-            Find teammates
-          </a>
-        {% else %}
-          <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary btn-lg">
-            Get started
-          </a>
-          <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-lg">
-            Browse projects
-          </a>
-        {% endif %}
+<div class="landing-page">
+  <section class="landing-hero" aria-labelledby="landing-title">
+    <div class="landing-hero-inner">
+      <div class="landing-hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> A better way to build together</p>
+        <h1 id="landing-title">Find projects.<br>Find peers.<br><span>Build the future.</span></h1>
+        <p class="landing-hero-description">
+          Great ideas are better when they’re shared. Meet collaborators, grow your skills, and turn what-if into what’s next.
+        </p>
+        <div class="landing-hero-actions">
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-primary btn-landing">Explore projects <span aria-hidden="true">→</span></a>
+            <a href="{{ url_for('projects.create_project') if 'projects.create_project' in url_map_endpoints else '#' }}" class="btn btn-outline btn-landing">Start a project</a>
+          {% else %}
+            <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary btn-landing">Get started <span aria-hidden="true">→</span></a>
+            <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-outline btn-landing">Explore projects</a>
+          {% endif %}
+        </div>
+        <div class="landing-proof" aria-label="TeamSphere community activity">
+          <span class="proof-avatars" aria-hidden="true"><i>J</i><i>M</i><i>A</i><i>+</i></span>
+          <span><strong>{{ open_project_count }}</strong> active project{{ 's' if open_project_count != 1 else '' }} <span class="proof-divider">·</span> <strong>{{ student_count }}</strong> maker{{ 's' if student_count != 1 else '' }}</span>
+        </div>
+      </div>
+
+      <div class="landing-hero-art" aria-hidden="true">
+        <div class="art-orbit art-orbit-one"></div>
+        <div class="art-orbit art-orbit-two"></div>
+        <div class="art-spark spark-one">✦</div>
+        <div class="art-spark spark-two">✦</div>
+        <div class="art-note note-one"><span class="note-check">✓</span> Great idea!</div>
+        <div class="art-note note-two"><span class="note-dot"></span> Teamwork in progress</div>
+        <svg class="collaboration-art" viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="scene-glow" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#F7FCFE"/>
+              <stop offset="1" stop-color="#D5EBF5"/>
+            </linearGradient>
+            <linearGradient id="screen-glow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#FFFFFF"/>
+              <stop offset="1" stop-color="#EFF8FB"/>
+            </linearGradient>
+            <linearGradient id="skin-warm" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#FFD8B9"/>
+              <stop offset="1" stop-color="#EBA77F"/>
+            </linearGradient>
+            <linearGradient id="skin-deep" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#C98E6D"/>
+              <stop offset="1" stop-color="#9E6046"/>
+            </linearGradient>
+            <linearGradient id="shirt-coral" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#F39A82"/>
+              <stop offset="1" stop-color="#D96F68"/>
+            </linearGradient>
+            <linearGradient id="shirt-teal" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#79B9B0"/>
+              <stop offset="1" stop-color="#4D918C"/>
+            </linearGradient>
+            <linearGradient id="shirt-gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#FFD18A"/>
+              <stop offset="1" stop-color="#E8A94F"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="343" cy="417" rx="265" ry="27" fill="#C9E2EE"/>
+          <circle cx="342" cy="225" r="184" fill="url(#scene-glow)"/>
+          <circle cx="342" cy="225" r="151" fill="none" stroke="#B6D9E7" stroke-width="2" stroke-dasharray="5 10"/>
+          <circle cx="342" cy="225" r="127" fill="#E8F5FA"/>
+
+          <g class="scene-screen">
+            <rect x="210" y="142" width="264" height="191" rx="17" fill="#203B63"/>
+            <rect x="220" y="152" width="244" height="170" rx="10" fill="url(#screen-glow)"/>
+            <path d="M220 162a10 10 0 0 1 10-10h224a10 10 0 0 1 10 10v17H220v-17Z" fill="#EAF4F8"/>
+            <circle cx="234" cy="165" r="3.5" fill="#E9A575"/>
+            <circle cx="246" cy="165" r="3.5" fill="#E4C36A"/>
+            <circle cx="258" cy="165" r="3.5" fill="#76B99B"/>
+            <rect x="235" y="192" width="66" height="8" rx="4" fill="#347F9A"/>
+            <rect x="235" y="207" width="117" height="5" rx="2.5" fill="#D2E4EB"/>
+            <rect x="235" y="219" width="94" height="5" rx="2.5" fill="#D2E4EB"/>
+            <rect x="235" y="241" width="99" height="61" rx="8" fill="#E5F3F8"/>
+            <rect x="345" y="241" width="101" height="61" rx="8" fill="#FFFFFF" stroke="#E2EDF1"/>
+            <path d="M250 281v-17l12-9 12 7 12-13 23 20" fill="none" stroke="#49A6A6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="250" cy="264" r="3" fill="#49A6A6"/>
+            <circle cx="274" cy="262" r="3" fill="#49A6A6"/>
+            <circle cx="286" cy="249" r="3" fill="#49A6A6"/>
+            <rect x="358" y="253" width="27" height="27" rx="13.5" fill="#F2B88F"/>
+            <rect x="390" y="253" width="27" height="27" rx="13.5" fill="#79AAA5"/>
+            <rect x="422" y="253" width="15" height="27" rx="7.5" fill="#D6C7EA"/>
+            <rect x="358" y="286" width="72" height="5" rx="2.5" fill="#D3E2E9"/>
+            <path d="M316 333v24h52v-24" fill="#627D9D"/>
+            <path d="M281 360h122l20 14H261l20-14Z" fill="#3B5578"/>
+            <rect x="318" y="363" width="49" height="4" rx="2" fill="#91A3B8"/>
+          </g>
+
+          <g class="scene-person scene-person-left">
+            <path d="M83 348c5-46 29-72 66-72s62 27 67 72v46H83v-46Z" fill="url(#shirt-coral)"/>
+            <path d="M116 288c-18 15-29 40-33 69l28 11 18-47 36 47 47-12c-8-47-28-75-63-80l-24 23-9-19Z" fill="url(#shirt-coral)"/>
+            <path d="m170 324 48 35c10 7 21-6 11-14l-43-41" fill="none" stroke="url(#skin-warm)" stroke-width="17" stroke-linecap="round"/>
+            <path d="m102 321-19 37c-5 11 11 17 17 6l25-37" fill="none" stroke="url(#skin-warm)" stroke-width="16" stroke-linecap="round"/>
+            <path d="M123 276h31v21l-15 17-16-17v-21Z" fill="#E9AA84"/>
+            <ellipse cx="139" cy="248" rx="31" ry="36" fill="url(#skin-warm)"/>
+            <path d="M108 246c-3-31 11-50 37-50 27 0 39 20 33 47-9-2-17-10-22-22-10 13-25 22-48 25Z" fill="#253B63"/>
+            <path d="M113 244c-1 17 1 27 7 34l-14-4c-9-3-13-13-10-22l5-17 12 9Z" fill="#253B63"/>
+            <path d="M114 210c9-12 21-18 34-17 10 1 18 5 24 12" fill="none" stroke="#536B8D" stroke-width="3" stroke-linecap="round"/>
+            <path d="M121 244c4-3 8-3 12 0m15 0c4-3 8-3 12 0" fill="none" stroke="#74564A" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="129" cy="251" r="2.3" fill="#503E3A"/>
+            <circle cx="151" cy="251" r="2.3" fill="#503E3A"/>
+            <path d="M140 252c-1 4-2 7-4 9 2 2 5 2 8 0" fill="none" stroke="#C48168" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M132 265c5 4 11 4 16 0" fill="none" stroke="#A9675B" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M95 370h104" stroke="#C96562" stroke-width="2" opacity=".45"/>
+          </g>
+
+          <g class="scene-person scene-person-right">
+            <path d="M466 348c5-46 29-72 66-72s62 27 67 72v46H466v-46Z" fill="url(#shirt-teal)"/>
+            <path d="M480 298c-31 9-51 38-57 75l40 8 25-48 24 48 49-7c-5-39-28-69-63-77l-18 19-0-18Z" fill="url(#shirt-teal)"/>
+            <path d="m480 329-44 31c-10 8 1 22 11 15l49-32" fill="none" stroke="url(#skin-deep)" stroke-width="17" stroke-linecap="round"/>
+            <path d="m548 326 29 37c8 10 22-1 15-11l-31-44" fill="none" stroke="url(#skin-deep)" stroke-width="16" stroke-linecap="round"/>
+            <path d="M500 276h31v22l-16 17-15-17v-22Z" fill="#A96D4B"/>
+            <ellipse cx="515" cy="248" rx="31" ry="36" fill="url(#skin-deep)"/>
+            <path d="M484 245c-2-31 11-49 36-49 26 0 39 19 33 45-11-2-21-10-26-22-10 14-24 23-43 26Z" fill="#283B60"/>
+            <path d="M486 242c-4 18-1 31 8 39-13-1-21-8-22-20-1-9 4-19 14-29Z" fill="#283B60"/>
+            <path d="M489 210c9-11 20-16 34-15 9 1 17 5 23 12" fill="none" stroke="#4C6383" stroke-width="3" stroke-linecap="round"/>
+            <path d="M496 244c4-3 8-3 12 0m13 0c4-3 8-3 12 0" fill="none" stroke="#4F342B" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="504" cy="251" r="2.3" fill="#352A28"/>
+            <circle cx="526" cy="251" r="2.3" fill="#352A28"/>
+            <path d="M517 252c-1 4-2 7-4 9 2 2 5 2 8 0" fill="none" stroke="#8B5944" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M507 265c5 4 11 4 16 0" fill="none" stroke="#724338" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M478 370h104" stroke="#3F827E" stroke-width="2" opacity=".55"/>
+          </g>
+
+          <g class="scene-person scene-person-center">
+            <path d="M286 106c5-30 24-47 56-47 31 0 50 18 54 48l-9 39h-91l-10-40Z" fill="url(#shirt-gold)"/>
+            <path d="M307 107h31v24l-15 14-16-14v-24Z" fill="url(#skin-warm)"/>
+            <ellipse cx="323" cy="89" rx="29" ry="34" fill="url(#skin-warm)"/>
+            <path d="M294 87c-2-29 11-46 34-46 24 0 36 18 29 43-8-4-15-12-19-22-10 14-25 23-44 25Z" fill="#594F73"/>
+            <path d="M301 57c8-11 18-16 31-15 9 1 17 5 23 12" fill="none" stroke="#84769F" stroke-width="3" stroke-linecap="round"/>
+            <path d="M304 84c4-3 8-3 12 0m13 0c4-3 8-3 12 0" fill="none" stroke="#74564A" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="313" cy="91" r="2.2" fill="#503E3A"/>
+            <circle cx="333" cy="91" r="2.2" fill="#503E3A"/>
+            <path d="M324 92c-1 4-2 7-4 9 2 2 5 2 7 0" fill="none" stroke="#C48168" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M316 104c5 4 10 4 15 0" fill="none" stroke="#A9675B" stroke-width="2.3" stroke-linecap="round"/>
+            <path d="M296 139c8 8 17 12 27 14 11-2 19-6 27-14" fill="none" stroke="#FFF1D9" stroke-width="2.5" opacity=".85"/>
+          </g>
+
+          <g class="scene-confetti">
+            <path d="M114 136 126 124" stroke="#E7A65C" stroke-width="5" stroke-linecap="round"/>
+            <path d="m540 143 12 11" stroke="#7AB9C8" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="194" cy="103" r="5" fill="#D9A7CB"/>
+            <circle cx="489" cy="105" r="5" fill="#E7A65C"/>
+            <path d="m576 268 10-4m-5-5 2 11" stroke="#83B79E" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <div class="art-caption"><span class="caption-check">✓</span><span><strong>Ideas grow here</strong><small>Make your next thing together</small></span></div>
       </div>
     </div>
-    {% if open_project_count or student_count %}
-      <aside class="hero-stats" aria-label="Department activity">
-        <p class="hero-stats-label">Around the department</p>
-        <div class="hero-stat-row">
-          <span class="hero-stat-number">{{ open_project_count }}</span>
-          <span class="hero-stat-label">projects looking for teammates</span>
-        </div>
-        <div class="hero-stat-row">
-          <span class="hero-stat-number">{{ student_count }}</span>
-          <span class="hero-stat-label">student collaborators</span>
-        </div>
-        <div class="hero-stat-row">
-          <span class="hero-stat-number">{{ completed_project_count }}</span>
-          <span class="hero-stat-label">completed projects in the archive</span>
-        </div>
-      </aside>
-    {% endif %}
   </section>
 
-  <!-- How It Works Section -->
-  <section class="how-it-works" aria-labelledby="how-it-works-title">
-    <div class="section-header">
-      <div>
-        <h2 id="how-it-works-title" class="section-title">A simple way to get started</h2>
-        <p class="section-subtitle">From first idea to a team that can make it happen.</p>
-      </div>
+  <section class="landing-benefits section" aria-labelledby="benefits-title">
+    <div class="landing-section-heading">
+      <p class="eyebrow">Made for makers</p>
+      <h2 id="benefits-title">More than a place to meet</h2>
+      <p>Everything you need to take an idea from “what if” to “we did it.”</p>
     </div>
-
-    <div class="feature-grid">
-      <div class="card feature-card">
-        <div class="feature-number">01</div>
-        <h3 class="feature-title">Show what you’re into</h3>
-        <p class="feature-text">Add your skills and interests so people working on the right kind of project can find you.</p>
-      </div>
-
-      <div class="card feature-card">
-        <div class="feature-number">02</div>
-        <h3 class="feature-title">Find your next build</h3>
-        <p class="feature-text">Browse class projects, hackathons, side quests, and research looking for a teammate like you.</p>
-      </div>
-
-      <div class="card feature-card">
-        <div class="feature-number">03</div>
-        <h3 class="feature-title">Make the first move</h3>
-        <p class="feature-text">Send a quick team-up request, share what you bring, and start building together.</p>
-      </div>
-
-      <div class="card feature-card">
-        <div class="feature-number">04</div>
-        <h3 class="feature-title">Share the finished thing</h3>
-        <p class="feature-text">Showcase what your team made and leave inspiration for the next students to jump in.</p>
-      </div>
+    <div class="benefit-grid">
+      <article class="benefit-card"><span class="benefit-icon benefit-lilac" aria-hidden="true">✦</span><h3>Find your people</h3><p>Meet curious, motivated teammates who bring fresh skills and energy to your idea.</p></article>
+      <article class="benefit-card"><span class="benefit-icon benefit-peach" aria-hidden="true">↗</span><h3>Build real projects</h3><p>Join work that matters to you, from a first brainstorm to a finished product.</p></article>
+      <article class="benefit-card"><span class="benefit-icon benefit-mint" aria-hidden="true">⌘</span><h3>Grow by doing</h3><p>Learn practical skills, try new roles, and build a portfolio as you collaborate.</p></article>
+      <article class="benefit-card"><span class="benefit-icon benefit-blue" aria-hidden="true">◎</span><h3>Make your mark</h3><p>Share your strengths and bring your unique point of view to the team.</p></article>
+      <article class="benefit-card"><span class="benefit-icon benefit-yellow" aria-hidden="true">♡</span><h3>Keep it welcoming</h3><p>Find a friendly space where every background, idea, and experience belongs.</p></article>
+      <article class="benefit-card"><span class="benefit-icon benefit-pink" aria-hidden="true">⌁</span><h3>Go further, together</h3><p>Turn individual ambition into shared momentum and work you’re proud of.</p></article>
     </div>
   </section>
 
-  <!-- Recent Projects Section -->
-  <section class="recent-projects" aria-labelledby="recent-projects-title">
-    <div class="section-header">
-      <div>
-        <h2 id="recent-projects-title" class="section-title">Recent projects</h2>
-        <p class="section-subtitle">Ideas and teams shared by your department</p>
-      </div>
-      <div>
-        <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-sm">
-          View all projects &rarr;
-        </a>
-      </div>
+  <section class="landing-how section" id="how-it-works" aria-labelledby="how-title">
+    <div class="landing-section-heading">
+      <p class="eyebrow">Your next chapter starts here</p>
+      <h2 id="how-title">From idea to impact, together</h2>
+      <p>Three simple steps are all it takes to get moving.</p>
     </div>
+    <div class="steps-grid">
+      <article class="step-card"><span class="step-number">01</span><div><h3>Explore</h3><p>Browse projects and discover ideas you can’t wait to be part of.</p></div></article>
+      <article class="step-card"><span class="step-number">02</span><div><h3>Connect</h3><p>Meet the people behind the projects and find your role on the team.</p></div></article>
+      <article class="step-card"><span class="step-number">03</span><div><h3>Create</h3><p>Bring your skills, share what you know, and make something real.</p></div></article>
+    </div>
+  </section>
 
-    {% if recent_projects and recent_projects|length > 0 %}
-      <div class="grid-3">
+  <section class="landing-projects section" aria-labelledby="projects-title">
+    <div class="landing-section-heading landing-projects-heading">
+      <div><p class="eyebrow">A good place to start</p><h2 id="projects-title">Projects looking for you</h2>
+        {% if recent_projects %}<p class="projects-intro">Take a look at what the community is working on.</p>{% else %}<p class="projects-intro">New ideas are always welcome. Start a project or check back soon to meet your next team.</p>{% endif %}
+      </div>
+      <a class="text-link" href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}">Explore all projects <span aria-hidden="true">→</span></a>
+    </div>
+    {% if recent_projects %}
+      <div class="project-grid">
         {% for project in recent_projects %}
-          <div class="card card-hoverable project-card project-card-{{ project.status }}">
-            <div class="card-body">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.35rem;">
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                  <span class="badge badge-{{ project.status }}">
-                    {{ project.status|replace('_', ' ') }}
-                  </span>
-                  {% if project.owner.role == 'faculty' %}
-                    <span class="badge badge-faculty" title="Verified by IT Faculty">
-                      &#9733; Faculty Verified
-                    </span>
-                  {% endif %}
-                </div>
-                <span class="category-label category-{{ project.category }}">
-                  {{ project.category }}
-                </span>
-              </div>
-
-              <h3 class="project-card-title" style="margin-bottom: 0.4rem; font-size: 1.15rem;">
-                <a href="{{ url_for('projects.project_detail', project_id=project.id) if 'projects.project_detail' in url_map_endpoints else '#' }}">
-                  {{ project.title }}
-                </a>
-              </h3>
-
-              <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.75rem;">
-                {{ project.short_description }}
-              </p>
-
-              <div class="tag-list">
-                {% for skill in project.skills[:4] %}
-                  <span class="tag t{{ skill.name|skill_color }}">{{ skill.name }}</span>
-                {% endfor %}
-                {% if project.skills|length > 4 %}
-                  <span class="tag">+{{ project.skills|length - 4 }}</span>
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="card-footer">
-              <span style="font-size: 0.82rem; color: var(--muted);">
-                {% if project.owner.role == 'faculty' %}
-                  By <strong>Prof. {{ project.owner.display_name }}</strong> (Faculty)
-                {% else %}
-                  By <strong>{{ project.owner.display_name }}</strong>
-                {% endif %}
-              </span>
-              <a href="{{ url_for('projects.project_detail', project_id=project.id) if 'projects.project_detail' in url_map_endpoints else '#' }}" class="btn btn-secondary btn-sm">
-                View project
-              </a>
-            </div>
-          </div>
+          <article class="project-card landing-project-card">
+            <div class="project-card-header"><span class="project-category">{{ project.category or 'Community project' }}</span><span class="project-status"><i aria-hidden="true"></i>{% if project.status == 'looking_for_teammates' %}Looking for teammates{% else %}{{ project.status|replace('_', ' ')|title }}{% endif %}</span></div>
+            <h3><a href="{{ url_for('projects.project_detail', project_id=project.id) if 'projects.project_detail' in url_map_endpoints else '#' }}">{{ project.title }}</a></h3>
+            <p>{{ project.short_description[:150] }}{% if project.short_description|length > 150 %}…{% endif %}</p>
+            {% if project.skills %}<div class="landing-project-skills" aria-label="Project skills">{% for skill in project.skills[:3] %}<span>{{ skill.name }}</span>{% endfor %}</div>{% endif %}
+            <div class="project-card-footer"><span class="project-owner">{{ project.owner.display_name if project.owner else 'TeamSphere member' }}</span><a href="{{ url_for('projects.project_detail', project_id=project.id) if 'projects.project_detail' in url_map_endpoints else '#' }}" class="project-card-link" aria-label="View {{ project.title }}">View project <span aria-hidden="true">→</span></a></div>
+          </article>
         {% endfor %}
       </div>
-    {% else %}
-      <div class="empty-state">
-        <span class="empty-state-mark" aria-hidden="true">+</span>
-        <h3 class="empty-state-title">No projects posted yet</h3>
-        <p class="empty-state-text">Start something new and invite teammates to build it with you.</p>
-        {% if current_user.is_authenticated %}
-          <a href="{{ url_for('projects.create_project') if 'projects.create_project' in url_map_endpoints else '#' }}" class="btn btn-primary">
-            + Post the first project
-          </a>
-        {% else %}
-          <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary">
-            Sign up to post a project
-          </a>
-        {% endif %}
-      </div>
     {% endif %}
   </section>
 
-  {% if completed_project_count %}
-    <section class="archive-teaser" aria-label="Completed projects">
-      <div>
-        <p class="archive-teaser-label">Department archive</p>
-        <h2>{{ completed_project_count }} completed project{{ 's' if completed_project_count != 1 else '' }}</h2>
-      </div>
-      <a href="{{ url_for('projects.browse_projects', status='archive') }}" class="btn btn-secondary">Explore completed work</a>
-    </section>
-  {% endif %}
+  <section class="landing-bottom-cta" aria-labelledby="bottom-cta-title">
+    <div><p class="eyebrow">Your people are out there</p><h2 id="bottom-cta-title">Ready to make something happen?</h2><p>Bring your curiosity. We’ll help you find the team.</p></div>
+    <a href="{{ url_for('auth.register') if 'auth.register' in url_map_endpoints else '#' }}" class="btn btn-primary btn-landing">Join TeamSphere <span aria-hidden="true">→</span></a>
+  </section>
 </div>
 {% endblock %}

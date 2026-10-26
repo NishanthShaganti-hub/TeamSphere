@@ -20,8 +20,16 @@
     <div class="container navbar">
       <div class="navbar-brand">
         <a href="{{ url_for('main.index') }}" class="brand-link" aria-label="TeamSphere Home">
-          <span class="brand-mark" aria-hidden="true">TS</span>
-          <span class="brand-name">TeamSphere</span>
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" focusable="false">
+              <circle cx="24" cy="9" r="7" class="logo-person-center"/>
+              <circle cx="9" cy="17" r="4" class="logo-person-side"/>
+              <circle cx="39" cy="17" r="4" class="logo-person-side"/>
+              <path d="M12 39V29c0-7 5-12 12-12s12 5 12 12v10a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2Z" class="logo-person-center"/>
+              <path d="M2 37v-7c0-4 3-7 7-7 2 0 4 1 5 2-2 2-3 5-3 8v6H4a2 2 0 0 1-2-2Zm44 0v-7c0-4-3-7-7-7-2 0-4 1-5 2 2 2 3 5 3 8v6h7a2 2 0 0 0 2-2Z" class="logo-person-side"/>
+            </svg>
+          </span>
+          <span class="brand-name"><span>Team</span><span>Sphere</span></span>
         </a>
       </div>
 
@@ -39,6 +47,9 @@
       <nav class="nav-menu" id="nav-menu">
         <ul class="nav-list">
           {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}>Home</a>
+            </li>
             <li class="nav-item">
               <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'projects' in request.endpoint %}active{% endif %}">Projects</a>
             </li>
@@ -64,6 +75,9 @@
             </li>
           {% else %}
             <li class="nav-item">
+              <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}>Home</a>
+            </li>
+            <li class="nav-item">
               <a href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" class="nav-link {% if request.endpoint and 'projects' in request.endpoint %}active{% endif %}">Projects</a>
             </li>
             <li class="nav-item">
@@ -78,6 +92,13 @@
           {% endif %}
         </ul>
       </nav>
+
+      <a class="header-search" href="{{ url_for('projects.browse_projects') if 'projects.browse_projects' in url_map_endpoints else '#' }}" aria-label="Search projects">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="10.8" cy="10.8" r="6.3"></circle>
+          <path d="m15.5 15.5 5 5"></path>
+        </svg>
+      </a>
     </div>
   </header>
 
@@ -96,7 +117,7 @@
   </div>
 
   <!-- Main Content Landmark -->
-  <main id="main-content" class="main-content">
+  <main id="main-content" class="main-content {% if request.endpoint == 'main.index' %}main-content-home{% endif %}">
     {% block content %}{% endblock %}
   </main>
 
